@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package vrch;
+
+message Text {
+  string text = 1;
+}
+
+message Voice {
+  bytes voice = 1;
+}
+
+service VrService {
+  rpc Talk(Text) returns (Voice) {}
+}
