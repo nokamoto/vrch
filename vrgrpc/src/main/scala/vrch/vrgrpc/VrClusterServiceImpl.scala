@@ -1,4 +1,4 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import io.grpc.stub.StreamObserver
 import vrch.VrClusterServiceGrpc.VrClusterService

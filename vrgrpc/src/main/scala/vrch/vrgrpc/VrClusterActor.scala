@@ -1,9 +1,9 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.routing.{RoundRobinRoutingLogic, Router}
 import vrch.Text
-import vrch.vr.VrClusterActor.Join
+import vrch.vrgrpc.VrClusterActor.Join
 
 class VrClusterActor extends Actor {
   private[this] var router = Router(RoundRobinRoutingLogic(), Vector.empty)

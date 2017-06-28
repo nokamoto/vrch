@@ -1,12 +1,12 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import io.grpc.stub.StreamObserver
-import vrch.vr.VrActor.IncomingObserver
-import vrch.vr.VrClusterActor.Join
+import vrch.vrgrpc.VrActor.IncomingObserver
+import vrch.vrgrpc.VrClusterActor.Join
 import vrch.{Outgoing, Text, Voice}
 
 import scala.concurrent.{Await, Future}

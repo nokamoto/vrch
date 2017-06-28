@@ -1,4 +1,4 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import vrch.VrServiceGrpc.VrService
 import vrch.{Text, Voice}

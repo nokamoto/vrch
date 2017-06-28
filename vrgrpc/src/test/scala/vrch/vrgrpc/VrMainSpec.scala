@@ -1,4 +1,4 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import java.util.concurrent.TimeUnit
 
@@ -8,7 +8,7 @@ import io.grpc.stub.StreamObserver
 import io.grpc.{ManagedChannel, StatusRuntimeException}
 import org.scalatest.FlatSpec
 import vrch._
-import vrch.vr.VrMainSpec.{observer, withServer}
+import vrch.vrgrpc.VrMainSpec.{observer, withServer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}

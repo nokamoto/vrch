@@ -1,4 +1,4 @@
-package vrch.vr
+package vrch.vrgrpc
 
 import scala.concurrent.duration._
 
