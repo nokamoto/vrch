@@ -2,16 +2,19 @@ package vrch.vr
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import io.grpc.ServerBuilder
-import vrch.VrServiceGrpc
+import io.grpc.netty.NettyServerBuilder
+import vrch.{VrClusterServiceGrpc, VrServiceGrpc}
 
 import scala.concurrent.ExecutionContext
 
-trait Vr extends UseVrConfig with UseVrService {
+trait Vr extends UseVrConfig with UseVrService with UseVrClusterService with UseVrCluster  {
   private[this] lazy val context = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(vrConfig.concurrency))
 
   private[this] lazy val server = {
-    ServerBuilder.forPort(vrConfig.port).addService(VrServiceGrpc.bindService(vrService, context)).build()
+    Seq(
+      VrServiceGrpc.bindService(vrService, context),
+      VrClusterServiceGrpc.bindService(vrClusterService, context)
+    ).foldLeft(NettyServerBuilder.forPort(vrConfig.port))(_.addService(_)).build()
   }
 
   def start(): Unit = server.start()
@@ -27,6 +30,8 @@ trait Vr extends UseVrConfig with UseVrService {
       server.shutdownNow()
     }
 
+    vrCluster.shutdown()
+
     context.shutdown()
     if (!context.awaitTermination(timeout, unit)) {
       context.shutdownNow()
@@ -34,7 +39,7 @@ trait Vr extends UseVrConfig with UseVrService {
   }
 }
 
-object VrMain extends Vr with MixinVrConfig with MixinVrService {
+object VrMain extends Vr with MixinVrConfig with MixinVrService with MixinVrClusterService with MixinVrCluster {
   def main(args: Array[String]): Unit = {
     start()
 

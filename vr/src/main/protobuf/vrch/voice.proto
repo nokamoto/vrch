@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package vrch;
+
+message Voice {
+  bytes voice = 1;
+}

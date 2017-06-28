@@ -15,4 +15,6 @@ val proto = Seq(
   )
 )
 
-lazy val vr = (project in file("vr")).settings(commons, proto)
+lazy val vr = (project in file("vr")).settings(
+  commons, proto, libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
+)

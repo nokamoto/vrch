@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package vrch;
+
+import "vrch/text.proto";
+import "vrch/voice.proto";
+
+message Incoming {
+  Voice voice = 1;
+}
+
+message Outgoing {
+  Text text = 1;
+}
+
+service VrClusterService {
+  rpc Join(stream Incoming) returns (stream Outgoing) {}
+}
