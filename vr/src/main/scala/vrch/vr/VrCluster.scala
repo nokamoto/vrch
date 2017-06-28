@@ -19,8 +19,8 @@ trait VrCluster extends UseVrConfig {
   def join(out: StreamObserver[Outgoing]): IncomingObserver = {
     val ref = system.actorOf(VrActor.props(out))
     cluster ! Join(ref)
-    val id = UUID.randomUUID()
-    new IncomingObserver(id = id, self = ref)
+    println(s"join $ref")
+    new IncomingObserver(self = ref)
   }
 
   def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.requestTimeout).mapTo[Voice]

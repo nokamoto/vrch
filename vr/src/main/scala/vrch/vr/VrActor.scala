@@ -13,12 +13,11 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
     case text: Text =>
       last match {
         case Some(_) =>
-          println("already exists.")
+          out.onError(new RuntimeException("inconsistent state or too many request"))
 
         case None =>
           out.onNext(Outgoing().update(_.text := text))
           last = Some(sender())
-
       }
 
     case in: Incoming =>
@@ -28,7 +27,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
           last = None
 
         case None =>
-          println("does not exist.")
+          out.onError(new RuntimeException("inconsistent state or too many request"))
       }
   }
 }
@@ -36,18 +35,18 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
 object VrActor {
   def props(out: StreamObserver[Outgoing]): Props = Props(new VrActor(out))
 
-  class IncomingObserver(id: UUID, self: ActorRef) extends StreamObserver[Incoming] {
+  class IncomingObserver(self: ActorRef) extends StreamObserver[Incoming] {
     override def onError(t: Throwable): Unit = {
-      println(s"$id error: $t")
+      println(s"$self error: $t")
     }
 
     override def onCompleted(): Unit = {
-      println(s"$id completed.")
+      println(s"$self completed.")
       self ! PoisonPill
     }
 
     override def onNext(value: Incoming): Unit = {
-      println(s"$id got: $value")
+      println(s"$self got: $value")
       self ! value
     }
   }
