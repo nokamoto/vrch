@@ -34,6 +34,8 @@ trait UseVrCluster {
   def vrCluster: VrCluster
 }
 
-trait MixinVrCluster extends UseVrCluster {
-  override val vrCluster: VrCluster = new VrCluster with MixinVrConfig
+trait MixinVrCluster extends UseVrCluster with UseVrConfig { self =>
+  override val vrCluster: VrCluster = new VrCluster {
+    override def vrConfig: VrConfig = self.vrConfig
+  }
 }

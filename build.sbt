@@ -1,6 +1,8 @@
 
 val commons = Seq(scalaVersion := "2.11.8", libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test")
 
+commons
+
 val proto = Seq(
   PB.targets in Compile := Seq(
     PB.gens.java(com.trueaccord.scalapb.compiler.Version.protobufVersion) -> ((sourceManaged in Compile).value / "protobuf-java"),
@@ -18,7 +20,15 @@ val proto = Seq(
 lazy val vr = (project in file("vr")).settings(commons, proto)
 
 lazy val vrgrpc = (project in file("vrgrpc")).settings(
-  commons, libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
+  commons,
+  libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3",
+  assemblyMergeStrategy in assembly := {
+    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
+      MergeStrategy.discard
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  }
 ).dependsOn(vr)
 
 lazy val chgrpc = (project in file("chgrpc")).settings(
@@ -26,7 +36,25 @@ lazy val chgrpc = (project in file("chgrpc")).settings(
   libraryDependencies ++= Seq(
     "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0",
     "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"
-  )
+  ),
+  assemblyMergeStrategy in assembly := {
+    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
+      MergeStrategy.discard
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  }
 ).dependsOn(vr)
 
-lazy val vrchgrpc = (project in file("vrchgrpc")).settings(commons).dependsOn(vr)
+lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
+  commons,
+  assemblyMergeStrategy in assembly := {
+    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
+      MergeStrategy.discard
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  }
+).dependsOn(vr)
+
+lazy val chcli = (project in file("chcli")).settings(commons).dependsOn(vr)
