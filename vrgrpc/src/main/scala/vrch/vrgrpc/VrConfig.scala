@@ -1,11 +1,17 @@
 package vrch.vrgrpc
 
+import vrch.grpc.{ServerConfig, UseServerConfig}
+
 import scala.concurrent.duration._
 
 case class VrConfig(port: Int, concurrency: Int, shutdownTimeout: FiniteDuration, requestTimeout: FiniteDuration)
 
-trait UseVrConfig {
+trait UseVrConfig extends UseServerConfig {
   def vrConfig: VrConfig
+
+  override def serverConfig: ServerConfig = {
+    ServerConfig(port = vrConfig.port, concurrency = vrConfig.concurrency, shutdownTimeout = vrConfig.shutdownTimeout)
+  }
 }
 
 trait MixinVrConfig extends UseVrConfig {

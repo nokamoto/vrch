@@ -1,28 +1,19 @@
 package vrch.grpc
 
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.TimeUnit
 
 import io.grpc.ServerServiceDefinition
 import io.grpc.netty.NettyServerBuilder
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
 
-trait ServerMain {
-  protected[this] def port: Int
-
-  protected[this] def shutdownTimeout: FiniteDuration
-
-  protected[this] def concurrency: Int
-
-  private[this] lazy val context: ExecutionContext = {
-    ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(concurrency))
-  }
-
+trait ServerMain extends UseServerConfig with UseExecutionContext {
   protected[this] def services: Seq[ExecutionContext => ServerServiceDefinition]
 
   private[this] lazy val server = {
-    services.foldLeft(NettyServerBuilder.forPort(port)){ case (builder, svc) => builder.addService(svc(context)) }.build()
+    services.foldLeft(NettyServerBuilder.forPort(serverConfig.port)){
+      case (builder, svc) => builder.addService(svc(context))
+    }.build()
   }
 
   def start(): Unit = server.start()
@@ -30,7 +21,7 @@ trait ServerMain {
   def awaitTermination(): Unit = server.awaitTermination()
 
   def shutdown(): Unit = {
-    val timeout = shutdownTimeout.toMillis
+    val timeout = serverConfig.shutdownTimeout.toMillis
     val unit = TimeUnit.MILLISECONDS
 
     server.shutdown()

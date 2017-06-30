@@ -9,11 +9,11 @@ import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import vrch.ChServiceGrpc.ChService
 import vrch.Dialogue
 import vrch.chgrpc.docomo.{DocomoDialogueRequest, DocomoDialogueResponse}
+import vrch.grpc.UseExecutionContext
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-trait ChServiceImpl extends ChService with UseChConfig {
+trait ChServiceImpl extends ChService with UseChConfig with UseExecutionContext {
   private[this] implicit val system = ActorSystem()
   private[this] implicit val materializer = ActorMaterializer()
 
@@ -46,8 +46,10 @@ trait UseChService {
   def chService: ChService
 }
 
-trait MixinChService extends UseChService with UseChConfig { self =>
+trait MixinChService extends UseChService with UseChConfig with UseExecutionContext { self =>
   override def chService: ChService = new ChServiceImpl {
     override def chConfig: ChConfig = self.chConfig
+
+    override implicit val context: ExecutionContext = self.context
   }
 }

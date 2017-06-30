@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package vrch;
+
+import "vrch/dialogue.proto";
+import "vrch/voice.proto";
+
+message Request {
+  Dialogue dialogue = 1;
+}
+
+message Response {
+  Dialogue dialogue = 1;
+
+  Voice voice = 2;
+}
+
+service VrchService {
+  rpc Talk(Request) returns (Response) {}
+}

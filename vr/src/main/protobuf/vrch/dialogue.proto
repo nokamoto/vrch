@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package vrch;
+
+import "vrch/text.proto";
+
+message Dialogue {
+  Text text = 1;
+
+  string context = 2;
+}

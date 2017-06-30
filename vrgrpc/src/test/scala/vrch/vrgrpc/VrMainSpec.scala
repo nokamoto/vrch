@@ -8,6 +8,7 @@ import io.grpc.stub.StreamObserver
 import io.grpc.{ManagedChannel, StatusRuntimeException}
 import org.scalatest.FlatSpec
 import vrch._
+import vrch.grpc.MixinExecutionContext
 import vrch.vrgrpc.VrMainSpec.{observer, withServer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -62,7 +63,7 @@ object VrMainSpec {
   }
 
   def withServer(port: Int)(f: ManagedChannel => Unit): Unit = {
-    val vr = new Vr with MixinVrService with MixinVrClusterService with MixinVrCluster {
+    val vr = new Vr with MixinVrService with MixinVrClusterService with MixinVrCluster with MixinExecutionContext {
       override def vrConfig: VrConfig = {
         VrConfig(port = port, concurrency = 1, shutdownTimeout = 3.seconds, requestTimeout = 3.seconds)
       }

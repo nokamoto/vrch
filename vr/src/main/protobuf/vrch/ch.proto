@@ -2,13 +2,7 @@ syntax = "proto3";
 
 package vrch;
 
-import "vrch/text.proto";
-
-message Dialogue {
-  Text text = 1;
-
-  string context = 2;
-}
+import "vrch/dialogue.proto";
 
 service ChService {
   rpc Talk(Dialogue) returns (Dialogue) {}

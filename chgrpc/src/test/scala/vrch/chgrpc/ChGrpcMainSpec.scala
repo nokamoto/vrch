@@ -4,6 +4,7 @@ import io.grpc.ManagedChannel
 import io.grpc.netty.NettyChannelBuilder
 import org.scalatest.FlatSpec
 import vrch.chgrpc.ChGrpcMainSpec.withServer
+import vrch.grpc.MixinExecutionContext
 import vrch.{ChServiceGrpc, Dialogue}
 
 import scala.concurrent.duration._
@@ -12,7 +13,7 @@ class ChGrpcMainSpec extends FlatSpec {
   it should "start dialogue" in {
     withServer { channel =>
       pending
-      
+
       val stub = ChServiceGrpc.blockingStub(channel)
 
       val res1 = stub.talk(Dialogue().update(_.text.text := "hello"))
@@ -40,7 +41,7 @@ object ChGrpcMainSpec {
   def withServer(f: ManagedChannel => Unit): Unit = {
     val availablePort = 9001
 
-    val server = new ChGrpc with MixinChService {
+    val server = new ChGrpc with MixinChService with MixinExecutionContext {
       override def chConfig: ChConfig = {
         ChConfig(
           apiKey = "",
