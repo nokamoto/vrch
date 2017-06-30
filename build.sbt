@@ -21,4 +21,12 @@ lazy val vrgrpc = (project in file("vrgrpc")).settings(
   commons, libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
 ).dependsOn(vr)
 
-lazy val vrnode = (project in file("vrnode")).settings(commons).dependsOn(vr)
+lazy val chgrpc = (project in file("chgrpc")).settings(
+  commons,
+  libraryDependencies ++= Seq(
+    "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0",
+    "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"
+  )
+).dependsOn(vr)
+
+lazy val vrchgrpc = (project in file("vrchgrpc")).settings(commons).dependsOn(vr)
