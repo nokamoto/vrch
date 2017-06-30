@@ -3,6 +3,7 @@ package vrch.chgrpc
 import vrch.grpc.{ServerConfig, UseServerConfig}
 
 import scala.concurrent.duration._
+import vrch.grpc.ImplicitProperty._
 
 case class ChConfig(apiKey: String, port: Int, concurrency: Int, shutdownTimeout: FiniteDuration)
 
@@ -17,8 +18,8 @@ trait UseChConfig extends UseServerConfig {
 trait MixinChConfig extends UseChConfig {
   override val chConfig: ChConfig = {
     ChConfig(
-      apiKey = sys.props.getOrElse("apikey", throw new UninitializedError),
-      port = 9001,
+      apiKey = "apikey".stringProp,
+      port = "grpc.port".intProp,
       concurrency = 3,
       shutdownTimeout = 10.seconds
     )

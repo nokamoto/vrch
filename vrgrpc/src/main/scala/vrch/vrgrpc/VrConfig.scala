@@ -1,5 +1,6 @@
 package vrch.vrgrpc
 
+import vrch.grpc.ImplicitProperty._
 import vrch.grpc.{ServerConfig, UseServerConfig}
 
 import scala.concurrent.duration._
@@ -16,6 +17,6 @@ trait UseVrConfig extends UseServerConfig {
 
 trait MixinVrConfig extends UseVrConfig {
   override val vrConfig: VrConfig = {
-    VrConfig(port = 9000, concurrency = 3, shutdownTimeout = 10.seconds, requestTimeout = 10.seconds)
+    VrConfig(port = "grpc.port".intProp, concurrency = 3, shutdownTimeout = 10.seconds, requestTimeout = 10.seconds)
   }
 }
