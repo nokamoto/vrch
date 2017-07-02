@@ -2,3 +2,7 @@
 target/
 gcp/out.pb
 gcp/grpc-k8s.yaml
+vrnode/packages/
+vrnode/.vs/
+vrnode/vrnode/bin/
+vrnode/vrnode/obj/
