@@ -7,20 +7,32 @@ import vrch.{Incoming, Outgoing, Text}
 class VrActor(out: StreamObserver[Outgoing]) extends Actor {
   private[this] var last: Option[ActorRef] = None
 
+  private[this] def outgoing(value: Outgoing): Unit = {
+    try {
+      out.onNext(value)
+    } catch {
+      case e: Throwable =>
+        println(s"$self: $e")
+        context.stop(self)
+    }
+  }
+
   override def receive: Receive = {
     case text: Text =>
       last match {
         case Some(_) =>
-          out.onError(new RuntimeException("inconsistent state or too many request"))
+          out.onError(new RuntimeException(s"$self inconsistent state or too many request"))
 
         case None =>
-          out.onNext(Outgoing().update(_.text := text))
+          outgoing(Outgoing().update(_.text := text))
           last = Some(sender())
       }
 
     case in: Incoming =>
       in match {
-        case _ if in.keeplive != 0 => out.onNext(Outgoing().update(_.keepalive := in.keeplive))
+        case _ if in.keeplive != 0 =>
+          outgoing(Outgoing().update(_.keepalive := in.keeplive))
+
         case _ =>
           last match {
             case Some(ref) =>
@@ -28,7 +40,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
               last = None
 
             case None =>
-              out.onError(new RuntimeException("inconsistent state or too many request"))
+              out.onError(new RuntimeException(s"$self inconsistent state or too many request"))
           }
       }
   }
@@ -48,7 +60,7 @@ object VrActor {
     }
 
     override def onNext(value: Incoming): Unit = {
-      println(s"$self got: $value")
+      println(s"$self got: $value".take(100))
       self ! value
     }
   }

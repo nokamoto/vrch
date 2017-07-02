@@ -53,8 +53,7 @@ object SlackBridgeMain {
             val upload = Http(new URL(new URL(slackUrl), "/api/files.upload").toString).
               params(
                 Seq(
-                  ("token", slackToken), ("filetype", "auto"), ("channels", channel),
-                  ("initial_comment", res.getDialogue.getText.text)
+                  ("token", slackToken), ("filetype", "auto"), ("channels", channel)
                 )
               ).
               postMulti(
@@ -80,10 +79,10 @@ object SlackBridgeMain {
     val websocket = client.open()
 
     while (true) {
-      Thread.sleep(10 * 1000)
-      if (ack.get() != id.get()) {
-        throw new RuntimeException(s"ping/pong failed.")
-      }
+      Thread.sleep(30 * 1000)
+//      if (ack.get() != id.get()) {
+//        throw new RuntimeException(s"ping/pong failed.")
+//      }
       websocket ! Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
     }
   }
