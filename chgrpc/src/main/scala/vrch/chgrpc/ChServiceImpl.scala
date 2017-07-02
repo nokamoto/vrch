@@ -14,7 +14,7 @@ import vrch.grpc.UseExecutionContext
 import scala.concurrent.{ExecutionContext, Future}
 
 trait ChServiceImpl extends ChService with UseChConfig with UseExecutionContext {
-  private[this] implicit val system = ActorSystem()
+  private[this] implicit val system = ActorSystem("ch")
   private[this] implicit val materializer = ActorMaterializer()
 
   private[this] lazy val apiKey = chConfig.apiKey

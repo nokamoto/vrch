@@ -1,2 +1,4 @@
 .idea/
 target/
+gcp/out.pb
+gcp/grpc-k8s.yaml

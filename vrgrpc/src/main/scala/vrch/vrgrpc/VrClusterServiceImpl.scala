@@ -6,6 +6,7 @@ import vrch.{Incoming, Outgoing}
 
 trait VrClusterServiceImpl extends VrClusterService with UseVrCluster {
   override def join(responseObserver: StreamObserver[Outgoing]): StreamObserver[Incoming] = {
+    println(s"join($responseObserver)")
     vrCluster.join(responseObserver)
   }
 }

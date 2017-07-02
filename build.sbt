@@ -21,14 +21,7 @@ lazy val vr = (project in file("vr")).settings(commons, proto)
 
 lazy val vrgrpc = (project in file("vrgrpc")).settings(
   commons,
-  libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3",
-  assemblyMergeStrategy in assembly := {
-    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
-      MergeStrategy.discard
-    case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
-      oldStrategy(x)
-  }
+  libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
 ).dependsOn(vr)
 
 lazy val chgrpc = (project in file("chgrpc")).settings(
@@ -36,14 +29,7 @@ lazy val chgrpc = (project in file("chgrpc")).settings(
   libraryDependencies ++= Seq(
     "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0",
     "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"
-  ),
-  assemblyMergeStrategy in assembly := {
-    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
-      MergeStrategy.discard
-    case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
-      oldStrategy(x)
-  }
+  )
 ).dependsOn(vr)
 
 lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
@@ -55,6 +41,8 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
   }
-).dependsOn(vr)
+).dependsOn(vr, vrgrpc, chgrpc)
 
 lazy val chcli = (project in file("chcli")).settings(commons).dependsOn(vr)
+
+lazy val vrchcli = (project in file("vrchcli")).settings(commons).dependsOn(vr)

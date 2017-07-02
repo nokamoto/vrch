@@ -1,9 +1,0 @@
-FROM openjdk:8u131-jdk
-
-COPY chgrpc/target/scala-2.11/chgrpc-assembly-0.1-SNAPSHOT.jar /chgrpc.jar
-
-ENV GRPC_PORT 9000
-
-ENV API_KEY default
-
-CMD java -Dgrpc.port=${GRPC_PORT} -Dapikey=${API_KEY} -jar /chgrpc.jar

@@ -4,15 +4,9 @@ COPY vrchgrpc/target/scala-2.11/vrchgrpc-assembly-0.1-SNAPSHOT.jar /vrchgrpc.jar
 
 ENV GRPC_PORT 9000
 
-ENV GRPC_VR_HOST localhost
+ENV API_KEY default
 
-ENV GRPC_VR_PORT 9000
-
-ENV GRPC_CH_HOST localhost
-
-ENV GRPC_CH_PORT 9000
-
-CMD java -Dgrpc.port=${GRPC_PORT}\
-    -Dgrpc.vr.host=${GRPC_VR_HOST} -Dgrpc.vr.port=${GRPC_VR_PORT}\
-    -Dgrpc.ch.host=${GRPC_CH_HOST} -Dgrpc.ch.port=${GRPC_CH_PORT}\
+CMD java\
+    -Dgrpc.port=${GRPC_PORT}\
+    -Dapikey=${API_KEY}\
     -jar /vrchgrpc.jar

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package vrch;
+
+import "vrch/dialogue.proto";
+import "vrch/text.proto";
+import "vrch/voice.proto";
+
+message Incoming {
+  Voice voice = 1;
+}
+
+message Outgoing {
+  Text text = 1;
+}
+
+service VrClusterService {
+  rpc Join(stream Incoming) returns (stream Outgoing) {}
+}
+
+message Request {
+  Dialogue dialogue = 1;
+}
+
+message Response {
+  Dialogue dialogue = 1;
+
+  Voice voice = 2;
+}
+
+service VrchService {
+  rpc Talk(Request) returns (Response) {}
+}
+
+service VrService {
+  rpc Talk(Text) returns (Voice) {}
+}
+
+service ChService {
+  rpc Talk(Dialogue) returns (Dialogue) {}
+}
