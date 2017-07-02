@@ -43,6 +43,22 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
   }
 ).dependsOn(vr, vrgrpc, chgrpc)
 
-lazy val chcli = (project in file("chcli")).settings(commons).dependsOn(vr)
+lazy val slackbridge = (project in file("slackbridge")).settings(
+  commons,
+  libraryDependencies ++= Seq(
+    "com.github.andyglow" %% "websocket-scala-client" % "0.2.4",
+    "org.scalaj" %% "scalaj-http" % "2.3.0",
+    "com.typesafe.play" %% "play-json" % "2.6.1"
+  ),
+  assemblyMergeStrategy in assembly := {
+    case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
+      MergeStrategy.discard
 
-lazy val vrchcli = (project in file("vrchcli")).settings(commons).dependsOn(vr)
+    case PathList("io", "netty", "internal", "tcnative", xs @ _ *) =>
+      MergeStrategy.discard
+
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  }
+).dependsOn(vr)

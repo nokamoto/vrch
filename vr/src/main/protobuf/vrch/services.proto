@@ -8,10 +8,14 @@ import "vrch/voice.proto";
 
 message Incoming {
   Voice voice = 1;
+
+  int64 keeplive = 2;
 }
 
 message Outgoing {
   Text text = 1;
+
+  int64 keepalive = 2;
 }
 
 service VrClusterService {
