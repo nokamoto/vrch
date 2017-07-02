@@ -2,6 +2,8 @@
 
 set -ex
 
-docker build -f docker/chgrpc -t vrch/chgrpc .
-docker build -f docker/vrgrpc -t vrch/vrgrpc .
-docker build -f docker/vrchgrpc -t vrch/vrchgrpc .
+# prerequisite: sbt vrchgrpc/assembly
+
+docker build -f docker/vrchgrpc -t nokamotohub/vrchgrpc .
+
+docker push nokamotohub/vrchgrpc

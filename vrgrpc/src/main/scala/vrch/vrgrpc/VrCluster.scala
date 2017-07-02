@@ -1,7 +1,5 @@
 package vrch.vrgrpc
 
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import io.grpc.stub.StreamObserver

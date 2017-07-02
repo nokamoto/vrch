@@ -1,7 +1,5 @@
 package vrch.vrgrpc
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import io.grpc.stub.StreamObserver
 import vrch.{Incoming, Outgoing, Text}

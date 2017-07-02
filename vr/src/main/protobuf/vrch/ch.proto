@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package vrch;
-
-import "vrch/dialogue.proto";
-
-service ChService {
-  rpc Talk(Dialogue) returns (Dialogue) {}
-}
