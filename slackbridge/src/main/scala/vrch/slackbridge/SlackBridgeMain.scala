@@ -79,7 +79,7 @@ object SlackBridgeMain {
     val websocket = client.open()
 
     while (true) {
-      Thread.sleep(30 * 1000)
+      Thread.sleep(10 * 1000)
 //      if (ack.get() != id.get()) {
 //        throw new RuntimeException(s"ping/pong failed.")
 //      }
