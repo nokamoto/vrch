@@ -1,0 +1,18 @@
+FROM openjdk:8u131-jdk
+
+COPY slackbridge/target/scala-2.11/slackbridge-assembly-0.1-SNAPSHOT.jar /slackbridge.jar
+
+ENV SLACK_URL https://slack.com
+
+ENV SLACK_TOKEN default
+
+ENV VRCH_HOST localhost
+
+ENV VRCH_PORT 80
+
+CMD java\
+    -Dslack.url=${SLACK_URL}\
+    -Dslack.token=${SLACK_TOKEN}\
+    -Dvrch.host=${VRCH_HOST}\
+    -Dvrch.port=${VRCH_PORT}\
+    -jar /slackbridge.jar

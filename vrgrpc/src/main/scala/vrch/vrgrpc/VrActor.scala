@@ -19,13 +19,17 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
       }
 
     case in: Incoming =>
-      last match {
-        case Some(ref) =>
-          ref ! in.getVoice
-          last = None
+      in match {
+        case _ if in.keeplive != 0 => out.onNext(Outgoing().update(_.keepalive := in.keeplive))
+        case _ =>
+          last match {
+            case Some(ref) =>
+              ref ! in.getVoice
+              last = None
 
-        case None =>
-          out.onError(new RuntimeException("inconsistent state or too many request"))
+            case None =>
+              out.onError(new RuntimeException("inconsistent state or too many request"))
+          }
       }
   }
 }
