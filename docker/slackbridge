@@ -10,9 +10,12 @@ ENV VRCH_HOST localhost
 
 ENV VRCH_PORT 80
 
+ENV GCP_API_KEY default
+
 CMD java\
     -Dslack.url=${SLACK_URL}\
     -Dslack.token=${SLACK_TOKEN}\
     -Dvrch.host=${VRCH_HOST}\
     -Dvrch.port=${VRCH_PORT}\
+    -Dgcp.apikey=${GCP_API_KEY}\
     -jar /slackbridge.jar

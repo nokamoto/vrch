@@ -21,9 +21,9 @@ apis:
 #
 usage:
   rules:
-  # methods can be called without an API Key.
+  # methods can not be called without an API Key.
   - selector: vrch.VrchService.Talk
-    allow_unregistered_calls: true
+    allow_unregistered_calls: false
 
   - selector: vrch.VrClusterService.Join
-    allow_unregistered_calls: true
+    allow_unregistered_calls: false

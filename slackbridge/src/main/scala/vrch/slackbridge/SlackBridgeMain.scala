@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import com.github.andyglow.websocket.WebsocketClient
 import io.grpc.netty.NettyChannelBuilder
 import play.api.libs.json.Json
+import vrch.grpc.GcpApiKeyInterceptor
 import vrch.grpc.ImplicitProperty._
 import vrch.{Request, VrchServiceGrpc}
 
@@ -17,8 +18,10 @@ object SlackBridgeMain {
     val slackToken = "slack.token".stringProp
     val vrchHost = "vrch.host".stringProp
     val vrchPort = "vrch.port".intProp
+    val apikey = "gcp.apikey".stringProp
 
-    val channel = NettyChannelBuilder.forAddress(vrchHost, vrchPort).usePlaintext(true).build()
+    val channel = NettyChannelBuilder.forAddress(vrchHost, vrchPort).
+      usePlaintext(true).intercept(new GcpApiKeyInterceptor(apikey)).build()
     val stub = VrchServiceGrpc.blockingStub(channel)
 
     val connected =
