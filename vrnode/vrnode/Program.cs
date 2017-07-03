@@ -8,10 +8,13 @@ namespace vrnode
 {
     class Program
     {
-        static async Task Join(Channel channel, VrController ctl, Vrch.VrClusterService.VrClusterServiceClient client, string directory)
+        static async Task Join(Channel channel, VrController ctl, Vrch.VrClusterService.VrClusterServiceClient client, string directory, string apikey)
         {
             long filename = 0;
-            using (var call = client.Join())
+            Metadata metadata = new Metadata();
+            metadata.Add("x-api-key", apikey);
+
+            using (var call = client.Join(headers: metadata))
             {
                 long ack = 0;
 
@@ -65,15 +68,16 @@ namespace vrnode
             string host = args[0];
             int port = int.Parse(args[1]);
             string directory = args[2];
+            string apikey = args[3];
 
-            Console.WriteLine(string.Format("host={0}, port={1}, wave files directory={2}", host, port, directory));
+            Console.WriteLine(string.Format("host={0}, port={1}, wave files directory={2}, apikey={3}", host, port, directory, apikey));
 
             Channel channel = new Channel(string.Format("{0}:{1}", host, port), ChannelCredentials.Insecure);
-            VrController ctl = new VrController(100, 50);
+            VrController ctl = new VrController(150, 50);
 
             var client = new Vrch.VrClusterService.VrClusterServiceClient(channel);
 
-            var task = Join(channel, ctl, client, directory);
+            var task = Join(channel, ctl, client, directory, apikey);
 
             task.Wait();
              
