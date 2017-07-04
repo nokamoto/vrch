@@ -33,7 +33,7 @@ trait ChServiceImpl extends ChService with UseChConfig with UseExecutionContext 
     println(body)
 
     client.url(url).addHttpHeaders(headers: _*).post(body).map { res =>
-      println(res)
+      println(s"$res - ${res.body.take(100)}")
       res.body[JsValue].validate[DocomoDialogueResponse].fold(
         invalid => throw JsResultException(invalid),
         r => Dialogue().update(_.text.text := r.utt, _.context := r.context)
