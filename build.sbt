@@ -6,7 +6,7 @@ commons
 val proto = Seq(
   PB.targets in Compile := Seq(
     PB.gens.java(com.trueaccord.scalapb.compiler.Version.protobufVersion) -> ((sourceManaged in Compile).value / "protobuf-java"),
-    scalapb.gen(flatPackage = true, javaConversions = true) -> ((sourceManaged in Compile).value / "protobuf-scala")
+    scalapb.gen(flatPackage = true, javaConversions = true, singleLineToString = true) -> ((sourceManaged in Compile).value / "protobuf-scala")
   ),
   libraryDependencies ++= Seq(
     "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf",
