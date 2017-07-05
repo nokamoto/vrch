@@ -1,0 +1,29 @@
+# The configuration schema is defined by service.proto file
+# https://github.com/googleapis/googleapis/blob/master/google/api/service.proto
+type: google.api.Service
+config_version: 3
+
+#
+# Name of the service configuration.
+#
+name: vrch.endpoints.{PROJECT_ID}.cloud.goog
+
+#
+# API title to appear in the user interface (Google Cloud Console).
+#
+title: Vrch gRPC API
+apis:
+- name: vrch.VrchService
+- name: vrch.VrClusterService
+
+#
+# API usage restrictions.
+#
+usage:
+  rules:
+  # methods can not be called without an API Key.
+  - selector: vrch.VrchService.Talk
+    allow_unregistered_calls: false
+
+  - selector: vrch.VrClusterService.Join
+    allow_unregistered_calls: false

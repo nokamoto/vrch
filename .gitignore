@@ -2,6 +2,7 @@
 target/
 gcp/out.pb
 gcp/grpc-k8s.yaml
+gcp/api_config.yaml
 vrnode/packages/
 vrnode/.vs/
 vrnode/vrnode/bin/
