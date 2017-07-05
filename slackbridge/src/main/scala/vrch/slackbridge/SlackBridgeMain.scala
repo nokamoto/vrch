@@ -30,8 +30,6 @@ object SlackBridgeMain {
 
     val connected = slackApi.post[RtmConnected]("/api/rtm.connect")
 
-    println(connected)
-
     val channels = slackApi.post[SlackChannels](
       "/api/channels.list",
       ("exclude_archived", "true"),
@@ -41,8 +39,6 @@ object SlackBridgeMain {
     val activeChannel = channels.channels.find(_.name == slackChannel).
       getOrElse(throw new RuntimeException(s"#$slackChannel not found."))
 
-    println(activeChannel)
-
     val id = new AtomicLong(0)
     val ack = new AtomicLong(0)
 
@@ -51,10 +47,10 @@ object SlackBridgeMain {
         try {
           val input = Json.parse(str)
 
-          println(str.take(100))
-
           input.\("type").as[String] match {
             case "message" =>
+              println(str.take(100))
+
               input.as[RtmMessage] match {
                 case message if message.channel != activeChannel.id =>
                   println(s"${context.get()}: do not respond to ${message.channel}")
@@ -91,10 +87,14 @@ object SlackBridgeMain {
               }
 
             case "pong" =>
+              println(str.take(100))
               ack.set(input.as[RtmPong].reply_to)
 
-            case _ =>
+            case "presence_change" =>
               // nop
+
+            case _ =>
+              println(str.take(100))
           }
         } catch {
           case t: Throwable =>
@@ -111,7 +111,11 @@ object SlackBridgeMain {
 //        throw new RuntimeException(s"ping/pong failed.")
 //      }
 
-      websocket ! Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
+      val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
+
+      println(ping)
+
+      websocket ! ping
     }
   }
 }
