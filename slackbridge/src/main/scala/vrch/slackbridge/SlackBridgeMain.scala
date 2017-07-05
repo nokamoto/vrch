@@ -52,26 +52,31 @@ object SlackBridgeMain {
 
     while (true) {
       Thread.sleep(10 * 1000)
-      
-      if (ack.get() != id.get()) {
-        println("ping/pong failed and shutdown now...")
-        client.shutdownSync()
 
-        println("sleep 10 seconds...")
-        Thread.sleep(10 * 1000)
+      try {
+        if (ack.get() != id.get()) {
+          println("ping/pong failed and shutdown now...")
+          client.shutdownSync()
 
-        println("reconnect...")
-        client = newClient()
-        websocket = client.open()
+          println("sleep 10 seconds...")
+          Thread.sleep(10 * 1000)
 
-        id.set(0)
-        ack.set(0)
-      } else {
-        val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
+          println("reconnect...")
+          client = newClient()
+          websocket = client.open()
 
-        println(ping)
+          id.set(0)
+          ack.set(0)
+        } else {
+          val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
 
-        websocket ! ping
+          println(ping)
+
+          websocket ! ping
+        }
+      } catch {
+        case t: Throwable =>
+          println(t)
       }
     }
   }
