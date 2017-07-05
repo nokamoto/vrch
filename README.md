@@ -11,6 +11,7 @@
 
 #### Deploying the Endpoints Configuration
 ```
+$ ./gcp/sed-api_config.sh [PROJECT_ID]
 $ ./gcp/setup-api-config.sh
 
 Service Configuration [SERVICE_CONFIG_ID] uploaded for service [SERVICE_NAME]
@@ -27,8 +28,21 @@ $ kubectl create -f gcp/grpc-k8s.yaml
 
 
 ```
-$ kubectl get service // [SERVER_IP]
+$ kubectl get service // [EXTERNAL_IP]
 ```
+
+##### Configuring Endpoints DNS
+必要であれば [Configuring Endpoints DNS](https://cloud.google.com/endpoints/docs/grpc-dns-configure) で DNS を設定します。
+
+```
+$ ./gcp/sed-api_config.sh [PROJECT_ID] [EXTERNAL_IP]
+$ ./gcp/setup-api-config.sh
+
+$ dig vrch.endpoints.[PROJECT_ID].cloud.goog +short
+[EXTERNAL_IP]
+```
+
+DNS 設定後は `[EXTERNAL_IP]` は FQDN を利用できます。
 
 ## vrnode
 
@@ -37,7 +51,7 @@ Voiceroid を起動した状態で vrnode を起動します。（東北きり�
 [Restricting API Access with API Keys (gRPC)](https://cloud.google.com/endpoints/docs/restricting-api-access-with-api-keys-grpc) の `[GCP_API_KEY]` を取得します。
 
 ```
-vrnode.exe [SERVER_IP] 80 [Voiceroid Wave Files Directory] [GCP_API_KEY]
+vrnode.exe [EXTERNAL_IP] 80 [Voiceroid Wave Files Directory] [GCP_API_KEY]
 ```
 
 ## slackbridge
@@ -45,7 +59,7 @@ vrnode.exe [SERVER_IP] 80 [Voiceroid Wave Files Directory] [GCP_API_KEY]
 Slack 上での会話を行うために [Bot Users](https://api.slack.com/bot-users) を作成し起動します。
 
 ```
-docker run -e "SLACK_TOKEN=[SLACK_TOKEN]" -e "VRCH_HOST=[SERVER_IP]" -e "SLACK_CHANNEL=[SLACK_CHANNEL]" -e "GCP_API_KEY=[GCP_API_KEY]" -d nokamotohub/slackbridge
+docker run -e "SLACK_TOKEN=[SLACK_TOKEN]" -e "VRCH_HOST=[EXTERNAL_IP]" -e "SLACK_CHANNEL=[SLACK_CHANNEL]" -e "GCP_API_KEY=[GCP_API_KEY]" -d nokamotohub/slackbridge
 ```
 
 チャンネル上の発言に反応して音声がアップロードされます。
