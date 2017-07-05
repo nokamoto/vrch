@@ -42,7 +42,7 @@ namespace vrnode
                         }
                         else
                         {
-                            ack = text.Keepalive;
+                            Interlocked.Exchange(ref ack, text.Keepalive);
                             Console.WriteLine("pong: " + text.Keepalive);
                         }
                     }
@@ -52,11 +52,14 @@ namespace vrnode
 
                 while (true)
                 {
+                    
                     Thread.Sleep(30 * 1000);
-                    //if (keepalive != ack)
-                    //{
-                    //    throw new InvalidOperationException("ping/pong failed.");
-                    //}
+
+                    if (keepalive != Interlocked.Read(ref ack))
+                    {
+                        throw new InvalidOperationException("ping/pong failed.");
+                    }
+
                     Console.WriteLine("ping: " + (keepalive + 1));
                     call.RequestStream.WriteAsync(new Vrch.Incoming { Keeplive = ++keepalive });
                 }
@@ -70,18 +73,30 @@ namespace vrnode
             string directory = args[2];
             string apikey = args[3];
 
+            VrController ctl = new VrController(150, 50);
+
             Console.WriteLine(string.Format("host={0}, port={1}, wave files directory={2}, apikey={3}", host, port, directory, apikey));
 
             Channel channel = new Channel(string.Format("{0}:{1}", host, port), ChannelCredentials.Insecure);
-            VrController ctl = new VrController(150, 50);
 
-            var client = new Vrch.VrClusterService.VrClusterServiceClient(channel);
+            while (true)
+            {
+                try
+                {
+                    var client = new Vrch.VrClusterService.VrClusterServiceClient(channel);
 
-            var task = Join(channel, ctl, client, directory, apikey);
+                    var task = Join(channel, ctl, client, directory, apikey);
 
-            task.Wait();
-             
-            channel.ShutdownAsync().Wait();
+                    task.Wait();
+                } catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+
+                    Console.WriteLine("sleep 10 seconds...");
+
+                    Thread.Sleep(10 * 1000);
+                }
+            }
         }
     }
 }
