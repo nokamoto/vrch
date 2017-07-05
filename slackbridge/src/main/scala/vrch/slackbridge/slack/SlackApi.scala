@@ -8,7 +8,7 @@ import scalaj.http.{Http, HttpResponse, MultiPart}
 
 case class SlackApi(url: String, token: String) {
   private[this] def as[A](path: String, res: HttpResponse[String])(implicit reads: Reads[A]): A = {
-    println(s"$path - $res (${res.body.take(100)})")
+    println(s"$path - ${res.toString.take(100)})")
 
     reads.reads(Json.parse(res.body)) match {
       case JsSuccess(value, _) => value

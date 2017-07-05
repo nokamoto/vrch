@@ -5,12 +5,10 @@ import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.github.andyglow.websocket.WebsocketClient
 import io.grpc.netty.NettyChannelBuilder
 import play.api.libs.json._
+import vrch.VrchServiceGrpc
 import vrch.grpc.GcpApiKeyInterceptor
 import vrch.grpc.ImplicitProperty._
 import vrch.slackbridge.slack._
-import vrch.{Request, VrchServiceGrpc}
-
-import scalaj.http.MultiPart
 
 object SlackBridgeMain {
   def main(args: Array[String]): Unit = {
@@ -28,8 +26,6 @@ object SlackBridgeMain {
 
     val slackApi = SlackApi(url = slackUrl, token = slackToken)
 
-    val connected = slackApi.post[RtmConnected]("/api/rtm.connect")
-
     val channels = slackApi.post[SlackChannels](
       "/api/channels.list",
       ("exclude_archived", "true"),
@@ -42,80 +38,41 @@ object SlackBridgeMain {
     val id = new AtomicLong(0)
     val ack = new AtomicLong(0)
 
-    val client = WebsocketClient[String](connected.url) {
-      case str =>
-        try {
-          val input = Json.parse(str)
+    def newClient(): WebsocketClient[String] = {
+      val connected = slackApi.post[RtmConnected]("/api/rtm.connect")
+      val received = new WsReceived(
+        activeChannel = activeChannel, context = context, stub = stub, ack = ack, connected = connected, slackApi = slackApi
+      )
 
-          input.\("type").as[String] match {
-            case "message" =>
-              println(str.take(100))
-
-              input.as[RtmMessage] match {
-                case message if message.channel != activeChannel.id =>
-                  println(s"${context.get()}: do not respond to ${message.channel}")
-
-                case message if message.user == connected.self.id =>
-                  println(s"${context.get()}: do not respond to myself")
-
-                case message if message.text.contains("has joined the channel") =>
-                  println(s"${context.get()}: do not respond to joined message")
-
-                case message =>
-                  val req = Request().update(_.dialogue.text.text := message.text, _.dialogue.context := context.get())
-                  val res = stub.talk(req)
-
-                  println(s"${context.get()}: ${req.toString.take(100)} - ${res.toString.take(100)}")
-
-                  context.set(res.getDialogue.context)
-
-                  val file = MultiPart(
-                    name = "file",
-                    filename = s"${res.getDialogue.getText.text}.wav",
-                    mime = "audio/wav",
-                    data =  res.getVoice.voice.toByteArray
-                  )
-
-                  val upload = slackApi.postFile[JsValue](
-                    "/api/files.upload",
-                    file,
-                    ("filetype", "auto"),
-                    ("channels", activeChannel.id)
-                  )
-
-                  println(upload)
-              }
-
-            case "pong" =>
-              println(str.take(100))
-              ack.set(input.as[RtmPong].reply_to)
-
-            case "presence_change" =>
-              // nop
-
-            case _ =>
-              println(str.take(100))
-          }
-        } catch {
-          case t: Throwable =>
-            println(t)
-        }
+      WebsocketClient[String](connected.url)(received.received)
     }
 
-    val websocket = client.open()
+    var client = newClient()
+    var websocket = client.open()
 
     while (true) {
       Thread.sleep(10 * 1000)
       
-//      if (ack.get() != id.get()) {
-//        throw new RuntimeException(s"ping/pong failed.")
-//      }
+      if (ack.get() != id.get()) {
+        println("ping/pong failed and shutdown now...")
+        client.shutdownSync()
 
-      val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
+        println("sleep 10 seconds...")
+        Thread.sleep(10 * 1000)
 
-      println(ping)
+        println("reconnect...")
+        client = newClient()
+        websocket = client.open()
 
-      websocket ! ping
+        id.set(0)
+        ack.set(0)
+      } else {
+        val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
+
+        println(ping)
+
+        websocket ! ping
+      }
     }
   }
 }
