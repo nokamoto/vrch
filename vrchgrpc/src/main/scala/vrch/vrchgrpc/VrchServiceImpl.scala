@@ -39,8 +39,6 @@ trait MixinVrchService extends UseVrchService
 
     override def chService: ChServiceGrpc.ChService = new ChServiceImpl {
       override def chConfig: ChConfig = self.chConfig
-
-      override implicit def context: ExecutionContext = self.context
     }
   }
 }

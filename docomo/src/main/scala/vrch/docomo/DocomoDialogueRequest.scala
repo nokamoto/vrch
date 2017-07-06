@@ -1,7 +1,10 @@
-package vrch.chgrpc.docomo
+package vrch.docomo
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json._
 
+/**
+  * @see [[https://dev.smt.docomo.ne.jp/?p=docs.api.page&api_name=dialogue&p_name=api_reference]]
+  */
 case class DocomoDialogueRequest(utt: String,
                                  context: Option[String] = None,
                                  nickname: Option[String] = None,
@@ -16,5 +19,5 @@ case class DocomoDialogueRequest(utt: String,
                                  place: Option[String] = None)
 
 object DocomoDialogueRequest {
-  lazy val format: Format[DocomoDialogueRequest] = Json.format[DocomoDialogueRequest]
+  implicit val format: OFormat[DocomoDialogueRequest] = Json.format
 }
