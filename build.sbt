@@ -37,7 +37,7 @@ lazy val vr = (project in file("vr")).settings(commons, proto)
 lazy val vrgrpc = (project in file("vrgrpc")).settings(
   commons,
   libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
-).dependsOn(vr)
+).dependsOn(vr, serverutil)
 
 lazy val docomo = (project in file("docomo")).settings(commons, json)
 
