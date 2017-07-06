@@ -17,6 +17,21 @@ val proto = Seq(
   )
 )
 
+val json = Seq(libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.1")
+
+val http = Seq(libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.3.0")
+
+val http4sVersion = "0.15.13a"
+
+val http4s = Seq(libraryDependencies ++=
+  Seq(
+    "org.http4s" %% "http4s-dsl" % http4sVersion,
+    "org.http4s" %% "http4s-blaze-server" % http4sVersion
+  )
+)
+
+lazy val serverutil = (project in file("serverutil")).settings(commons)
+
 lazy val vr = (project in file("vr")).settings(commons, proto)
 
 lazy val vrgrpc = (project in file("vrgrpc")).settings(
@@ -24,13 +39,13 @@ lazy val vrgrpc = (project in file("vrgrpc")).settings(
   libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
 ).dependsOn(vr)
 
-lazy val chgrpc = (project in file("chgrpc")).settings(
-  commons,
-  libraryDependencies ++= Seq(
-    "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.0.0",
-    "com.typesafe.play" %% "play-ws-standalone-json" % "1.0.0"
-  )
-).dependsOn(vr)
+lazy val docomo = (project in file("docomo")).settings(commons, json)
+
+lazy val mockdocomo = (project in file("mockdocomo")).settings(commons, http4s, json).dependsOn(docomo)
+
+lazy val chgrpc = (project in file("chgrpc")).
+  settings(commons, json, http).
+  dependsOn(vr, docomo, serverutil % "test", mockdocomo % "test")
 
 lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
   commons,
@@ -45,11 +60,9 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
 
 lazy val slackbridge = (project in file("slackbridge")).settings(
   commons,
-  libraryDependencies ++= Seq(
-    "com.github.andyglow" %% "websocket-scala-client" % "0.2.4",
-    "org.scalaj" %% "scalaj-http" % "2.3.0",
-    "com.typesafe.play" %% "play-json" % "2.6.1"
-  ),
+  json,
+  http,
+  libraryDependencies ++= Seq("com.github.andyglow" %% "websocket-scala-client" % "0.2.4"),
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard
