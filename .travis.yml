@@ -1,0 +1,23 @@
+sudo: required
+
+language: scala
+
+services:
+  - docker
+
+branches:
+  only:
+    - master
+
+scala:
+   - 2.11.8
+
+jdk:
+  - oraclejdk8
+
+before_install:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test:compile test vrchgrpc/assembly slackbridge/assembly
+  - ./docker/build.sh
