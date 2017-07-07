@@ -17,6 +17,13 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
     }
   }
 
+  override def postStop(): Unit = {
+    super.postStop()
+
+    println(s"$self postStop")
+    out.onCompleted()
+  }
+
   override def receive: Receive = {
     case text: Text =>
       last match {
