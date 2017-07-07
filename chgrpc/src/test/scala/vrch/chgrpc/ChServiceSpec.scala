@@ -50,11 +50,17 @@ class ChServiceSpec extends FlatSpec {
             assert(x.contentType.exists(_.mediaType.subType === "json"))
           }
 
-          val expected1 = JsSuccess(DocomoDialogueRequest(utt = req1.getText.text))
-          assert(Json.parse(actual1.as[String].unsafePerformSync).validate[DocomoDialogueRequest] === expected1)
+          def req(actual: Request): DocomoDialogueRequest = {
+            val j = actual.as[String].unsafePerformSync
+            try {
+              Json.parse(j).validate[DocomoDialogueRequest].get
+            } catch {
+              case e: Throwable => fail(s"unexpected json request: $j $actual", e)
+            }
+          }
 
-          val expected2 = JsSuccess(DocomoDialogueRequest(utt = req2.getText.text, context = Some(context)))
-          assert(Json.parse(actual2.as[String].unsafePerformSync).validate[DocomoDialogueRequest] === expected2)
+          assert(req(actual1) === DocomoDialogueRequest(utt = req1.getText.text))
+          assert(req(actual2) === DocomoDialogueRequest(utt = req2.getText.text, context = Some(context)))
 
         case xs => fail(s"unexpected requests: $xs")
       }
