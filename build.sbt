@@ -30,28 +30,29 @@ val http4s = Seq(libraryDependencies ++=
   )
 )
 
+val akka = Seq(libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3")
+
+val websocket = Seq(libraryDependencies += "com.github.andyglow" %% "websocket-scala-client" % "0.2.4")
+
 lazy val serverutil = (project in file("serverutil")).settings(commons)
 
 lazy val vr = (project in file("vr")).settings(commons, proto)
 
-lazy val vrgrpc = (project in file("vrgrpc")).settings(
-  commons,
-  libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3"
-).dependsOn(vr, serverutil)
+lazy val vrgrpc = (project in file("vrgrpc")).settings(commons, akka).dependsOn(vr, serverutil)
 
 lazy val docomo = (project in file("docomo")).settings(commons, json)
 
 lazy val mockdocomo = (project in file("mockdocomo")).settings(commons, http4s, json).dependsOn(docomo)
 
 lazy val chgrpc = (project in file("chgrpc")).
-  settings(commons, json, http).
-  dependsOn(vr, docomo, serverutil % "test", mockdocomo % "test")
+  settings(commons, json, http).dependsOn(vr, docomo, serverutil % "test", mockdocomo % "test")
 
 lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
   commons,
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard
+
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
@@ -59,10 +60,7 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
 ).dependsOn(vr, vrgrpc, chgrpc)
 
 lazy val slackbridge = (project in file("slackbridge")).settings(
-  commons,
-  json,
-  http,
-  libraryDependencies ++= Seq("com.github.andyglow" %% "websocket-scala-client" % "0.2.4"),
+  commons, json, http, websocket,
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard
