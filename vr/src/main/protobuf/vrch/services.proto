@@ -6,6 +6,8 @@ import "vrch/dialogue.proto";
 import "vrch/text.proto";
 import "vrch/voice.proto";
 
+import "google/protobuf/empty.proto";
+
 message Incoming {
   Voice voice = 1;
 
@@ -18,8 +20,18 @@ message Outgoing {
   int64 keepalive = 2;
 }
 
+message ClusterInfo {
+  message Node {
+    string name = 1;
+  }
+
+  repeated Node node = 1;
+}
+
 service VrClusterService {
   rpc Join(stream Incoming) returns (stream Outgoing) {}
+
+  rpc Info(google.protobuf.Empty) returns (ClusterInfo) {}
 }
 
 message Request {

@@ -2,8 +2,9 @@ package vrch.vrgrpc
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.routing.{RoundRobinRoutingLogic, Router}
-import vrch.Text
-import vrch.vrgrpc.VrClusterActor.Join
+import vrch.ClusterInfo.Node
+import vrch.{ClusterInfo, Text}
+import vrch.vrgrpc.VrClusterActor.{Info, Join}
 
 class VrClusterActor extends Actor {
   private[this] var router = Router(RoundRobinRoutingLogic(), Vector.empty)
@@ -12,6 +13,9 @@ class VrClusterActor extends Actor {
     case Join(ref) =>
       router = router.addRoutee(ref)
       context.watch(ref)
+
+    case Info =>
+      sender() ! ClusterInfo().update(_.node := router.routees.map(r => Node().update(_.name := r.toString)))
 
     case Terminated(ref) =>
       router = router.removeRoutee(ref)
@@ -23,6 +27,8 @@ class VrClusterActor extends Actor {
 
 object VrClusterActor {
   case class Join(ref: ActorRef)
+
+  case object Info
 
   def props: Props = Props(new VrClusterActor)
 }

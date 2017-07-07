@@ -21,6 +21,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
     super.postStop()
 
     println(s"$self postStop")
+
     out.onCompleted()
   }
 
@@ -59,6 +60,7 @@ object VrActor {
   class IncomingObserver(self: ActorRef) extends StreamObserver[Incoming] {
     override def onError(t: Throwable): Unit = {
       println(s"$self error: $t")
+      self ! PoisonPill
     }
 
     override def onCompleted(): Unit = {

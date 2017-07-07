@@ -3,13 +3,14 @@ package vrch.vrgrpc
 import java.util.concurrent.atomic.AtomicReference
 
 import com.google.protobuf.ByteString
+import com.google.protobuf.empty.Empty
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import io.grpc.{ManagedChannel, ServerServiceDefinition}
 import org.scalatest.{Assertion, FlatSpec, Suite}
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
 import vrch.util.AvailablePort
-import vrch.vrgrpc.VrServiceSpec.{expect, observer, withServer}
+import vrch.vrgrpc.VrServiceSpec.{expect, observer, withServer, clusterInfo}
 import vrch._
 
 import scala.concurrent.ExecutionContext
@@ -25,6 +26,8 @@ class VrServiceSpec extends FlatSpec {
 
       val in1 = clusterStub.join(observer(expected1.set))
       val in2 = clusterStub.join(observer(expected2.set))
+
+      expect(10.seconds)(assert(clusterInfo(channel).node.size === 2))
 
       in1.onNext(Incoming().update(_.keeplive := 1))
       in2.onNext(Incoming().update(_.keeplive := 2))
@@ -48,7 +51,11 @@ class VrServiceSpec extends FlatSpec {
       val clusterStub = VrClusterServiceGrpc.stub(channel)
       val in = clusterStub.join(observer(_ => ()))
 
+      expect(10.seconds)(assert(clusterInfo(channel).node.size === 1))
+
       in.onError(new RuntimeException("cancel"))
+
+      expect(10.seconds)(assert(clusterInfo(channel).node.size === 0))
     }
   }
 
@@ -78,6 +85,8 @@ class VrServiceSpec extends FlatSpec {
 }
 
 object VrServiceSpec extends AvailablePort with Suite {
+  def clusterInfo(channel: ManagedChannel): ClusterInfo = VrClusterServiceGrpc.blockingStub(channel).info(Empty())
+
   def expect(timeout: FiniteDuration)(f: => Assertion): Unit = {
     val ms = timeout.toMillis / 10
 
