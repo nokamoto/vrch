@@ -18,13 +18,13 @@ class WsReceived(activeChannel: SlackChannel,
   private[this] def message(input: JsValue): Unit = {
     input.as[RtmMessage] match {
       case message if message.channel != activeChannel.id =>
-        println(s"${context.get()}: do not respond to ${message.channel}")
+        println(s"${context.get()}: do not respond to channel ${message.channel}")
+
+      case message if message.subtype.isDefined =>
+        println(s"${context.get()}: do not response to subtype ${message.subtype.get}")
 
       case message if message.user == connected.self.id =>
         println(s"${context.get()}: do not respond to myself")
-
-      case message if message.text.contains("has joined the channel") =>
-        println(s"${context.get()}: do not respond to joined message")
 
       case message =>
         val req = Request().update(_.dialogue.text.text := message.text, _.dialogue.context := context.get())
@@ -66,7 +66,7 @@ class WsReceived(activeChannel: SlackChannel,
             println(str.take(100))
             ack.set(input.as[RtmPong].reply_to)
 
-          case "presence_change" =>
+          case "presence_change" | "user_typing" =>
             // nop
 
           case _ =>
