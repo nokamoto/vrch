@@ -144,6 +144,7 @@ object VrServiceSpec extends AvailablePort with Suite {
       grpc.start()
       f(channel)
     } finally {
+      channel.shutdown()
       grpc.shutdown()
     }
   }

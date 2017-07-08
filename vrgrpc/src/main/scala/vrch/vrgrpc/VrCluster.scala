@@ -26,6 +26,7 @@ trait VrCluster extends UseVrConfig {
   def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.requestTimeout).mapTo[Voice]
 
   def shutdown(): Unit = {
+    println(s"shutdown $system")
     Await.result(system.terminate(), vrConfig.shutdownTimeout)
   }
 }
