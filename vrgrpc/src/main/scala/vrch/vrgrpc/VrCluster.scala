@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import akka.pattern.ask
 import io.grpc.stub.StreamObserver
 import vrch.vrgrpc.VrActor.IncomingObserver
-import vrch.vrgrpc.VrClusterActor.Join
-import vrch.{Outgoing, Text, Voice}
+import vrch.vrgrpc.VrClusterActor.{Info, Join}
+import vrch.{ClusterInfo, Outgoing, Text, Voice}
 
 import scala.concurrent.{Await, Future}
 
@@ -20,6 +20,8 @@ trait VrCluster extends UseVrConfig {
     println(s"join $ref")
     new IncomingObserver(self = ref)
   }
+
+  def info: Future[ClusterInfo] = cluster.ask(Info)(vrConfig.requestTimeout).mapTo[ClusterInfo]
 
   def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.requestTimeout).mapTo[Voice]
 
