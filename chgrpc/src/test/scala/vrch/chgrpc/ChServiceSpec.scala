@@ -40,7 +40,7 @@ class ChServiceSpec extends FlatSpec {
 
       actual.get() match {
         case xs @ actual1 :: actual2 :: Nil =>
-          xs.foreach { x =>
+          xs.foreach { case (x, _) =>
             assert(x.method === Method.POST)
 
             assert(x.uri.path.contentEquals("/dialogue/v1/dialogue"))
@@ -50,12 +50,11 @@ class ChServiceSpec extends FlatSpec {
             assert(x.contentType.exists(_.mediaType.subType === "json"))
           }
 
-          def req(actual: Request): DocomoDialogueRequest = {
-            val j = actual.as[String].unsafePerformSync
+          def req(actual: (Request, String)): DocomoDialogueRequest = {
             try {
-              Json.parse(j).validate[DocomoDialogueRequest].get
+              Json.parse(actual._2).validate[DocomoDialogueRequest].get
             } catch {
-              case e: Throwable => fail(s"unexpected json request: $j $actual", e)
+              case e: Throwable => fail(s"unexpected json request: $actual", e)
             }
           }
 
@@ -71,7 +70,7 @@ class ChServiceSpec extends FlatSpec {
 object ChServiceSpec extends AvailablePort {
   case class Props(apiKey: String, responses: Seq[DocomoDialogueResponse])
 
-  def withServer(props: Props)(f: (ManagedChannel, AtomicReference[List[Request]]) => Unit): Unit = {
+  def withServer(props: Props)(f: (ManagedChannel, AtomicReference[List[(Request, String)]]) => Unit): Unit = {
     val p1 = availablePort()
     val p2 = availablePort()
 

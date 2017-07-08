@@ -24,9 +24,10 @@ trait ChServiceImpl extends ChService with UseChConfig {
 
     println(body)
 
-    val res = Http(url).param("APIKEY", apiKey).headers(headers).postData(body.toString()).asString
+    val req = Http(url).param("APIKEY", apiKey).headers(headers).postData(body.toString())
+    val res = req.asString
 
-    println(s"${body.toString().take(100)} - ${res.toString.take(100)}")
+    println(s"${req.toString().take(100)} - ${res.toString.take(100)}")
 
     Json.parse(res.body).validate[DocomoDialogueResponse].fold(
       invalid => Future.failed(JsResultException(invalid)),
