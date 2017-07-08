@@ -1,5 +1,7 @@
 # vrch
 
+![GCP](https://user-images.githubusercontent.com/4374383/27984854-69f2d704-641b-11e7-9fa9-f7376db2fb23.png)
+
 ## vrchgrpc
 
 ### Getting Started on GCP
