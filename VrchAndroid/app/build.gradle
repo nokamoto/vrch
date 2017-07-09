@@ -1,0 +1,80 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
+
+def Properties properties = new Properties()
+
+properties.load(new FileInputStream("build.properties"))
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "26.0.0"
+    defaultConfig {
+        applicationId "nokamoto.github.com.vrchandroid"
+        minSdkVersion 21
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        debug {
+            buildConfigField "String", "GRPC_HOST", "\"${properties.getProperty("grpc.host")}\""
+            buildConfigField "String", "GRPC_APIKEY", "\"${properties.getProperty("grpc.apikey")}\""
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            buildConfigField "String", "GRPC_HOST", "\"${properties.getProperty("grpc.host")}\""
+            buildConfigField "String", "GRPC_APIKEY", "\"${properties.getProperty("grpc.apikey")}\""
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy.force "com.google.code.findbugs:jsr305:2.0.1"
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:22.2.1'
+    compile 'com.android.support:recyclerview-v7:22.2.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+
+
+    compile 'io.grpc:grpc-okhttp:1.4.0'
+    compile 'io.grpc:grpc-protobuf-lite:1.4.0'
+    compile 'io.grpc:grpc-stub:1.4.0'
+    compile "javax.annotation:javax.annotation-api:1.2"
+
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.android.support:support-v4:22.2.1'
+    //annotationProcessor 'com.github.bumptech.glide:compiler:3.7.0'
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.2.0"
+    }
+    plugins {
+        javalite {
+            artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0"
+        }
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.4.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            javalite {}
+            grpc {
+                // Options added to --grpc_out
+                option 'lite'
+            }
+        }
+    }
+}
