@@ -1,11 +1,13 @@
-package nokamoto.github.com.vrchandroid;
+package nokamoto.github.com.vrchandroid.main;
 
 public class ChatMessage {
     private WhoAmI from;
     private String message;
     private long createdAt;
 
-    ChatMessage(WhoAmI from, String message) {
+    private final static String NAME = "kiritan";
+
+    public ChatMessage(WhoAmI from, String message) {
         this.from = from;
         this.message = message;
         this.createdAt = System.currentTimeMillis();
@@ -24,6 +26,6 @@ public class ChatMessage {
     }
 
     public String getName() {
-        return new String("kiritan");
+        return NAME;
     }
 }

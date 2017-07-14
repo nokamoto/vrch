@@ -1,4 +1,4 @@
-package nokamoto.github.com.vrchandroid;
+package nokamoto.github.com.vrchandroid.main;
 
 public enum WhoAmI {
     SELF,

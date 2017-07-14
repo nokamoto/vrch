@@ -19,14 +19,18 @@ android {
     buildTypes {
         debug {
             buildConfigField "String", "GRPC_HOST", "\"${properties.getProperty("grpc.host")}\""
+            buildConfigField "String", "GRPC_PORT", "\"${properties.getProperty("grpc.port")}\""
             buildConfigField "String", "GRPC_APIKEY", "\"${properties.getProperty("grpc.apikey")}\""
+            buildConfigField "String", "FCM_SERVERKEY", "\"${properties.getProperty("fcm.serverkey")}\""
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
             buildConfigField "String", "GRPC_HOST", "\"${properties.getProperty("grpc.host")}\""
+            buildConfigField "int", "GRPC_PORT", "\"${properties.getProperty("grpc.port")}\""
             buildConfigField "String", "GRPC_APIKEY", "\"${properties.getProperty("grpc.apikey")}\""
+            buildConfigField "String", "FCM_SERVERKEY", "\"${properties.getProperty("fcm.serverkey")}\""
         }
     }
 
@@ -40,20 +44,20 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    //annotationProcessor 'com.github.bumptech.glide:compiler:3.7.0'
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:recyclerview-v7:22.2.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    testCompile 'junit:junit:4.12'
-
-
     compile 'io.grpc:grpc-okhttp:1.4.0'
     compile 'io.grpc:grpc-protobuf-lite:1.4.0'
     compile 'io.grpc:grpc-stub:1.4.0'
-    compile "javax.annotation:javax.annotation-api:1.2"
-
+    compile 'javax.annotation:javax.annotation-api:1.2'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.android.support:support-v4:22.2.1'
-    //annotationProcessor 'com.github.bumptech.glide:compiler:3.7.0'
+    compile 'com.google.firebase:firebase-messaging:10.0.1'
+    compile 'com.google.android.gms:play-services-gcm:10.0.1'
+    testCompile 'junit:junit:4.12'
 }
 
 protobuf {
@@ -78,3 +82,4 @@ protobuf {
         }
     }
 }
+apply plugin: 'com.google.gms.google-services'

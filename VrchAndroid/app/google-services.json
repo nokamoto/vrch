@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "211712342796",
+    "firebase_url": "https://vrchandroid.firebaseio.com",
+    "project_id": "vrchandroid",
+    "storage_bucket": "vrchandroid.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211712342796:android:f6291a4941dedbd9",
+        "android_client_info": {
+          "package_name": "nokamoto.github.com.vrchandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "211712342796-ab6n9aqhrot0m0f07cuikh8m5jn6at2p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "nokamoto.github.com.vrchandroid",
+            "certificate_hash": "d2b3204711e23e333e4041ae632c28e0ae9fe039"
+          }
+        },
+        {
+          "client_id": "211712342796-6c6agf1q6qv3ofratv857s532oo2id36.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDf3DbOs6mULVjeE_CLs2UWU-n96hrBJUc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "211712342796-6c6agf1q6qv3ofratv857s532oo2id36.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
