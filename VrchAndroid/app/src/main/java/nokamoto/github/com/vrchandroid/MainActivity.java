@@ -1,10 +1,10 @@
 package nokamoto.github.com.vrchandroid;
 
-import android.content.Context;
-import android.media.AudioAttributes;
-import android.media.SoundPool;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,35 +12,39 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.messaging.FirebaseMessaging;
+
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import io.grpc.ManagedChannel;
-import io.grpc.okhttp.OkHttpChannelBuilder;
+import nokamoto.github.com.vrchandroid.fcm.FcmChatMessage;
+import nokamoto.github.com.vrchandroid.fcm.FcmClient;
+import nokamoto.github.com.vrchandroid.grpc.GrpcUtils;
+import nokamoto.github.com.vrchandroid.main.ChatMessage;
+import nokamoto.github.com.vrchandroid.main.FcmChatMessageReceiver;
+import nokamoto.github.com.vrchandroid.main.MessageListAdapter;
+import nokamoto.github.com.vrchandroid.main.WhoAmI;
+import nokamoto.github.com.vrchandroid.wav.WavController;
 import vrch.DialogueOuterClass;
 import vrch.Services;
 import vrch.TextOuterClass;
 import vrch.VrchServiceGrpc;
 
 public class MainActivity extends AppCompatActivity {
-    private final static int MAX_STREAMS = 5;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private final static String LOBBY = "lobby";
 
-    private static ManagedChannel channel;
-    private static String context;
-    private final static String host = BuildConfig.GRPC_HOST;
-    private final static String apikey = BuildConfig.GRPC_APIKEY;
+    private String context;
+    private ManagedChannel channel;
+    private FcmClient fcmClient;
+    private WavController wav;
 
-    private AudioAttributes audioAttributes;
-    private SoundPool sounds;
-    private Map<String, Integer> streamIds = Collections.synchronizedMap(new HashMap<String, Integer>());
+    private RecyclerView messageRecycler;
+    private MessageListAdapter messageAdapter;
+    private RecyclerView.LayoutManager layoutManager;
 
-    private RecyclerView mMessageRecycler;
-    private MessageListAdapter mMessageAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private BroadcastReceiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,46 +52,42 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         context = "";
-        Log.d(this.toString(), String.format("%s %s", host, apikey));
 
-        channel = OkHttpChannelBuilder.
-                forAddress(host, 80).
-                intercept(new GrpcApiKeyInterceptor(apikey)).
-                usePlaintext(true).
-                build();
+        channel = GrpcUtils.newChannel();
 
-        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
-        mMessageAdapter = new MessageListAdapter(this);
-        mMessageRecycler = (RecyclerView) findViewById(R.id.reyclerview_message_list);
-        mMessageRecycler.setLayoutManager(mLayoutManager);
-        mMessageRecycler.setAdapter(mMessageAdapter);
+        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
 
-        audioAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build();
+        messageAdapter = new MessageListAdapter(this);
 
-        sounds = new SoundPool.Builder()
-                .setAudioAttributes(audioAttributes)
-                .setMaxStreams(MAX_STREAMS)
-                .build();
+        messageRecycler = (RecyclerView) findViewById(R.id.reyclerview_message_list);
+        messageRecycler.setLayoutManager(layoutManager);
+        messageRecycler.setAdapter(messageAdapter);
 
-        sounds.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
-            @Override
-            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                Log.d(this.toString(), String.format("onLoadComplete: sampleId=%d, status=%d", sampleId, status));
-                soundPool.play(sampleId, 1, 1, 1, 0, 1);
-            }
-        });
+        wav = new WavController(this);
+
+        FirebaseMessaging.getInstance().subscribeToTopic(LOBBY);
+
+        fcmClient = new FcmClient();
+
+        receiver = new FcmChatMessageReceiver(messageAdapter);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).
+                registerReceiver(receiver, new IntentFilter(FcmChatMessage.INTENT_ACTION));
+
+        GoogleApiAvailability.getInstance().makeGooglePlayServicesAvailable(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(receiver);
     }
 
     public void sendMessage(View view) throws IOException {
         EditText editText = (EditText) findViewById(R.id.edittext_chatbox);
         String message = editText.getText().toString();
 
-        Log.d(this.toString(), message);
-
-        mMessageAdapter.add(new ChatMessage(WhoAmI.SELF, message));
+        messageAdapter.add(new ChatMessage(WhoAmI.SELF, message));
 
         DialogueOuterClass.Dialogue dialogue = DialogueOuterClass.Dialogue.newBuilder().
                 setText(TextOuterClass.Text.newBuilder().setText(message)).setContext(context).build();
@@ -103,10 +103,14 @@ public class MainActivity extends AppCompatActivity {
         protected Services.Response doInBackground(Services.Request... requests) {
             Services.Request req = requests[0];
 
+            fcmClient.send(LOBBY, new FcmChatMessage(WhoAmI.SELF, req.getDialogue().getText().getText()));
+
             VrchServiceGrpc.VrchServiceBlockingStub stub = VrchServiceGrpc.newBlockingStub(channel);
 
             Services.Response res = stub.talk(req);
             context = res.getDialogue().getContext();
+
+            fcmClient.send(LOBBY, new FcmChatMessage(WhoAmI.KIRITAN, res.getDialogue().getText().getText()));
 
             return res;
         }
@@ -117,32 +121,16 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(this.toString(), res.toString());
 
                 DialogueOuterClass.Dialogue dialogue = res.getDialogue();
+
+                context = dialogue.getContext();
+                messageAdapter.add(new ChatMessage(WhoAmI.KIRITAN, dialogue.getText().getText()));
+
                 String filename = dialogue.getText().getText() + ".wav";
                 byte[] bytes = res.getVoice().getVoice().toByteArray();
 
-                try(FileOutputStream stream = openFileOutput(filename, Context.MODE_PRIVATE)) {
-                    stream.write(bytes);
-                    stream.flush();
-                    stream.getFD().sync();
-                }
-
-                try(FileInputStream stream = openFileInput(filename)) {
-                    if (streamIds.size() >= MAX_STREAMS) {
-                        for (int streamId : streamIds.values()) {
-                            sounds.unload(streamId);
-                        }
-                        streamIds.clear();
-                    }
-
-                    int streamId = sounds.load(stream.getFD(), 0, bytes.length, 1);
-                    streamIds.put(filename, streamId);
-                    Log.d(this.toString(), String.format("load %s %d", filename, streamId));
-                }
-
-                context = dialogue.getContext();
-                mMessageAdapter.add(new ChatMessage(WhoAmI.KIRITAN, dialogue.getText().getText()));
+                wav.play(filename, bytes);
             } catch (Exception e) {
-                Log.e(this.toString(), "onPoseExecute", e);
+                Log.e(TAG, "failed to handle: " + res, e);
             }
         }
     }

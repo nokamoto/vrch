@@ -1,4 +1,4 @@
-package nokamoto.github.com.vrchandroid;
+package nokamoto.github.com.vrchandroid.main;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -20,7 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import nokamoto.github.com.vrchandroid.R;
+
 public class MessageListAdapter extends RecyclerView.Adapter {
+    private static final String TAG = MessageListAdapter.class.getSimpleName();
+
     private Context context;
     private List<ChatMessage> messages;
 
@@ -30,14 +34,12 @@ public class MessageListAdapter extends RecyclerView.Adapter {
     }
 
     public void add(ChatMessage message) {
-        Log.d(this.toString(), "notifyDataSetChanged");
         messages.add(0, message);
         this.notifyDataSetChanged();
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Log.d(this.toString(), "onCreateViewHolder");
         View view;
 
         if (viewType == WhoAmI.SELF.ordinal()) {
@@ -50,31 +52,35 @@ public class MessageListAdapter extends RecyclerView.Adapter {
             return new ReceivedMessageHolder(view);
         }
 
-        Log.d(this.toString(), "onCreateViewHolder???????????????????????????????");
+        Log.e(TAG, "unexpected viewType: " + viewType);
 
         return null;
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        Log.d(this.toString(), "onBindViewHolder");
         if (holder.getItemViewType() == WhoAmI.SELF.ordinal()) {
             ((SentMessageHolder)holder).bind(messages.get(position));
         } else if (holder.getItemViewType() == WhoAmI.KIRITAN.ordinal()) {
             ((ReceivedMessageHolder)holder).bind(messages.get(position));
+        } else {
+            Log.e(TAG, "unexpected viewType: " + holder.getItemViewType());
         }
     }
 
     @Override
     public int getItemCount() {
-        Log.d(this.toString(), "getItemCount: " + messages.size());
         return messages.size();
     }
 
     @Override
     public int getItemViewType(int position) {
-        Log.d(this.toString(), "getItemViewType: " + position);
         return messages.get(position).getFrom().ordinal();
+    }
+
+    private static String formatDate(long date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return dateFormat.format(date);
     }
 
     private class ReceivedMessageHolder extends RecyclerView.ViewHolder {
@@ -93,9 +99,7 @@ public class MessageListAdapter extends RecyclerView.Adapter {
         void bind(ChatMessage message) {
             messageText.setText(message.getMessage());
 
-            // Format the stored timestamp into a readable String using method.
-            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            timeText.setText(dateFormat.format(message.getCreatedAt()));
+            timeText.setText(formatDate(message.getCreatedAt()));
 
             nameText.setText(message.getName());
 
@@ -130,9 +134,7 @@ public class MessageListAdapter extends RecyclerView.Adapter {
         void bind(ChatMessage message) {
             messageText.setText(message.getMessage());
 
-            // Format the stored timestamp into a readable String using method.
-            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            timeText.setText(dateFormat.format(message.getCreatedAt()));
+            timeText.setText(formatDate(message.getCreatedAt()));
         }
     }
 }

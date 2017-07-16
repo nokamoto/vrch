@@ -1,4 +1,4 @@
-package nokamoto.github.com.vrchandroid;
+package nokamoto.github.com.vrchandroid.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -8,7 +8,7 @@ import io.grpc.ForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
-public class GrpcApiKeyInterceptor implements ClientInterceptor {
+class GrpcApiKeyInterceptor implements ClientInterceptor {
     private String apikey = null;
 
     static final private Metadata.Key<String> header = Metadata.Key.of("x-api-key", Metadata.ASCII_STRING_MARSHALLER);
