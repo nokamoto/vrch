@@ -68,7 +68,7 @@ public class FcmChatMessage {
     public Intent toIntent() {
         Intent i = new Intent();
         i.setAction(INTENT_ACTION);
-        i.putExtra(WHO, who);
+        i.putExtra(WHO, who.ordinal());
         i.putExtra(MESSAGE, message);
         i.putExtra(APP_ID, appId);
         return i;
