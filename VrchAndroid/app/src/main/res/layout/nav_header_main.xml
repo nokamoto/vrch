@@ -20,10 +20,11 @@
         android:src="@drawable/kiritan"/>
 
     <TextView
+        android:id="@+id/nav_account_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text=""
+        android:text="@string/pref_account_default_display_name"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
 </LinearLayout>

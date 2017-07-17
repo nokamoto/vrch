@@ -1,5 +1,6 @@
 package nokamoto.github.com.vrchandroid;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -9,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import nokamoto.github.com.vrchandroid.main.ChatActivityController;
 
@@ -16,7 +18,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ChatActivityController chatActivity;
-
+    private AccountPreference account;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +29,14 @@ public class MainActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                syncAccountName();
+            }
+        };
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -36,6 +45,8 @@ public class MainActivity extends AppCompatActivity
 
         chatActivity = new ChatActivityController(this);
         chatActivity.onCreate(savedInstanceState);
+
+        account = new AccountPreference(getBaseContext());
     }
 
     @Override
@@ -73,6 +84,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_settings) {
+            Intent i = new Intent(this, SettingsActivity.class);
+            startActivity(i);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -82,5 +95,10 @@ public class MainActivity extends AppCompatActivity
 
     public void sendMessage(View view) {
         chatActivity.sendMessage(view);
+    }
+
+    private void syncAccountName() {
+        TextView accountName = (TextView) findViewById(R.id.nav_account_name);
+        accountName.setText(account.displayName());
     }
 }
