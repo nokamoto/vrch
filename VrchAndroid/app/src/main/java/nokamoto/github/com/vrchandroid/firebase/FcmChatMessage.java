@@ -1,4 +1,4 @@
-package nokamoto.github.com.vrchandroid.fcm;
+package nokamoto.github.com.vrchandroid.firebase;
 
 import org.json.JSONException;
 import org.json.JSONObject;

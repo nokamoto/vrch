@@ -1,10 +1,7 @@
 package nokamoto.github.com.vrchandroid.main;
 
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,13 +11,26 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.tasks.Tasks;
+import com.google.common.base.Optional;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import io.grpc.ManagedChannel;
 import nokamoto.github.com.vrchandroid.AccountPreference;
 import nokamoto.github.com.vrchandroid.R;
-import nokamoto.github.com.vrchandroid.fcm.FcmChatMessage;
-import nokamoto.github.com.vrchandroid.fcm.FcmClient;
+import nokamoto.github.com.vrchandroid.firebase.FcmChatMessage;
+import nokamoto.github.com.vrchandroid.firebase.FcmClient;
+import nokamoto.github.com.vrchandroid.firebase.FirebaseMessage;
 import nokamoto.github.com.vrchandroid.grpc.GrpcUtils;
 import nokamoto.github.com.vrchandroid.wav.WavController;
 import vrch.DialogueOuterClass;
@@ -31,6 +41,7 @@ import vrch.VrchServiceGrpc;
 public class ChatActivityController {
     private static final String TAG = ChatActivityController.class.getSimpleName();
     private final static String LOBBY = "lobby";
+    private final static String MESSAGES = "messages";
 
     private String context;
     private ManagedChannel channel;
@@ -43,6 +54,9 @@ public class ChatActivityController {
 
     private AppCompatActivity activity;
     private AccountPreference account;
+
+    private FirebaseDatabase database;
+    private ChildEventListener databaseListener;
 
     public ChatActivityController(AppCompatActivity activity, AccountPreference account) {
         this.activity = activity;
@@ -71,6 +85,59 @@ public class ChatActivityController {
         fcmClient = new FcmClient();
 
         GoogleApiAvailability.getInstance().makeGooglePlayServicesAvailable(activity);
+
+        database = FirebaseDatabase.getInstance();
+    }
+
+    public void onStart() {
+        Query q = database.getReference().child(MESSAGES).child(LOBBY).limitToLast(100);
+        q.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot children : dataSnapshot.getChildren()) {
+                    Optional<FirebaseMessage> data = FirebaseMessage.fromSnapshot(children);
+                    Log.i(TAG, "query: " + data);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "canceled.", databaseError.toException());
+            }
+        });
+
+        databaseListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Optional<FirebaseMessage> data = FirebaseMessage.fromSnapshot(dataSnapshot);
+                if (data.isPresent()) {
+                    Log.i(TAG, "added: " + data);
+                    messageAdapter.add(data.get());
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "canceled.", databaseError.toException());
+            }
+        };
+
+        database.getReference().child(MESSAGES).child(LOBBY).addChildEventListener(databaseListener);
+    }
+
+    public void onStop() {
+        if (databaseListener != null) {
+            database.getReference().child(MESSAGES).child(LOBBY).removeEventListener(databaseListener);
+        }
     }
 
     public void onDestroy() {
@@ -84,8 +151,6 @@ public class ChatActivityController {
         if (!message.isEmpty()) {
             Button send = (Button) activity.findViewById(R.id.button_chatbox_send);
             send.setEnabled(false);
-
-            messageAdapter.add(new ChatMessage(WhoAmI.SELF, message, account.displayName()));
 
             DialogueOuterClass.Dialogue dialogue = DialogueOuterClass.Dialogue.newBuilder().
                     setText(TextOuterClass.Text.newBuilder().setText(message)).setContext(context).build();
@@ -108,9 +173,51 @@ public class ChatActivityController {
             return null;
         }
 
+        private void writeDatabase(FirebaseMessage message) {
+            try {
+                String pushed = database.getReference().child(MESSAGES).child(LOBBY).push().getKey();
+                Map<String, Object> childUpdates = new HashMap<>();
+                String key = String.format("/%s/%s/%s", MESSAGES, LOBBY, pushed);
+                childUpdates.put(key, message.toMap());
+
+                Tasks.await(database.getReference().updateChildren(childUpdates));
+
+                Log.i(TAG, "write realtime database: " + key + " " + message);
+            } catch (Exception e) {
+                Log.e(TAG, "realtime database failed: " + message, e);
+            }
+        }
+
+        private void writeDatabase(Services.Request req) {
+            try {
+                WhoAmI who = WhoAmI.SELF;
+                String displayName = account.displayName();
+                String uid = account.uid();
+                String msg = req.getDialogue().getText().getText();
+                FirebaseMessage message = new FirebaseMessage(who, displayName, uid, msg);
+
+                writeDatabase(message);
+            } catch (Exception e) {
+                Log.e(TAG, "realtime database failed: " + req, e);
+            }
+        }
+
+        private void writeDatabase(Services.Response res) {
+            try {
+                String msg = res.getDialogue().getText().getText();
+                FirebaseMessage message = FirebaseMessage.kiritan(msg);
+
+                writeDatabase(message);
+            } catch (Exception e) {
+                Log.e(TAG, "realtime database failed: " + res, e);
+            }
+        }
+
         @Override
         protected Services.Response doInBackground(Services.Request... requests) {
             Services.Request req = requests[0];
+
+            writeDatabase(req);
 
             Services.Response res = call(req);
 
@@ -118,7 +225,11 @@ public class ChatActivityController {
                 String request = req.getDialogue().getText().getText();
                 String response = res.getDialogue().getText().getText();
                 String displayName = account.displayName();
-                fcmClient.send(LOBBY, new FcmChatMessage(request, response, displayName));
+                FcmChatMessage message = new FcmChatMessage(request, response, displayName);
+
+                writeDatabase(res);
+
+                fcmClient.send(LOBBY, message);
             }
 
             return res;
@@ -137,14 +248,12 @@ public class ChatActivityController {
 
                     context = dialogue.getContext();
 
-                    messageAdapter.add(ChatMessage.kiritan(dialogue.getText().getText()));
-
                     String filename = dialogue.getText().getText() + ".wav";
                     byte[] bytes = res.getVoice().getVoice().toByteArray();
 
                     wav.play(filename, bytes);
                 } else {
-                    messageAdapter.add(ChatMessage.kiritan("Oops! Something went wrong."));
+                    messageAdapter.add(FirebaseMessage.kiritan("Oops! Something went wrong."));
                 }
 
             } catch (Exception e) {

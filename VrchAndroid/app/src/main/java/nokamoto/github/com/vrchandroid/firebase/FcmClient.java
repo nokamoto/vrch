@@ -1,4 +1,4 @@
-package nokamoto.github.com.vrchandroid.fcm;
+package nokamoto.github.com.vrchandroid.firebase;
 
 import android.util.Log;
 

@@ -95,7 +95,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         super.onCreate(savedInstanceState);
         setupActionBar();
 
-        uid = new AccountPreference(getBaseContext()).uid(FirebaseAuth.getInstance().getCurrentUser());
+        uid = new AccountPreference(getBaseContext()).uid();
     }
 
     /**

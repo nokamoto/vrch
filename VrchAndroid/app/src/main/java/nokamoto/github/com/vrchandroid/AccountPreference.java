@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class AccountPreference {
@@ -24,6 +25,10 @@ public class AccountPreference {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putString(key, value);
         editor.apply();
+    }
+
+    public String uid() {
+        return uid(FirebaseAuth.getInstance().getCurrentUser());
     }
 
     String uid(FirebaseUser user) {

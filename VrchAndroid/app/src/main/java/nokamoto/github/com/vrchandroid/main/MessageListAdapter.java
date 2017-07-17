@@ -16,25 +16,37 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
 import nokamoto.github.com.vrchandroid.R;
+import nokamoto.github.com.vrchandroid.firebase.FirebaseMessage;
 
-public class MessageListAdapter extends RecyclerView.Adapter {
+class MessageListAdapter extends RecyclerView.Adapter {
     private static final String TAG = MessageListAdapter.class.getSimpleName();
+    private final static String KIRITAN_NAME = "kiritan";
 
     private Context context;
-    private List<ChatMessage> messages;
+    private List<FirebaseMessage> messages;
 
-    public MessageListAdapter(Context context) {
+    MessageListAdapter(Context context) {
         this.context = context;
-        this.messages = new ArrayList<>();
+        this.messages = new LinkedList<>();
     }
 
-    public void add(ChatMessage message) {
-        messages.add(0, message);
+    synchronized void add(FirebaseMessage message) {
+        int i = 0;
+        for (FirebaseMessage m : messages) {
+            if (m.getUuid().equals(message.getUuid())) {
+                return;
+            }
+            if (m.getCreatedAt() <= message.getCreatedAt()) {
+                break;
+            }
+            ++i;
+        }
+        messages.add(i, message);
         this.notifyDataSetChanged();
     }
 
@@ -75,7 +87,7 @@ public class MessageListAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        return messages.get(position).getFrom().ordinal();
+        return messages.get(position).getWho().ordinal();
     }
 
     private static String formatDate(long date) {
@@ -96,12 +108,12 @@ public class MessageListAdapter extends RecyclerView.Adapter {
             profileImage = (ImageView) itemView.findViewById(R.id.image_message_profile);
         }
 
-        void bind(ChatMessage message) {
+        void bind(FirebaseMessage message) {
             messageText.setText(message.getMessage());
 
             timeText.setText(formatDate(message.getCreatedAt()));
 
-            nameText.setText(message.getName());
+            nameText.setText(KIRITAN_NAME);
 
             // Insert the profile image from the URL into the ImageView.
             Glide.with(context)
@@ -131,7 +143,7 @@ public class MessageListAdapter extends RecyclerView.Adapter {
             timeText = (TextView) itemView.findViewById(R.id.text_message_time);
         }
 
-        void bind(ChatMessage message) {
+        void bind(FirebaseMessage message) {
             messageText.setText(message.getMessage());
 
             timeText.setText(formatDate(message.getCreatedAt()));
