@@ -6,7 +6,7 @@ def Properties properties = new Properties()
 properties.load(new FileInputStream("build.properties"))
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 25
     buildToolsVersion "26.0.0"
     defaultConfig {
         applicationId "nokamoto.github.com.vrchandroid"
@@ -46,15 +46,15 @@ dependencies {
     })
 
     //annotationProcessor 'com.github.bumptech.glide:compiler:3.7.0'
-    compile 'com.android.support:appcompat-v7:22.2.1'
-    compile 'com.android.support:recyclerview-v7:22.2.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'io.grpc:grpc-okhttp:1.4.0'
     compile 'io.grpc:grpc-protobuf-lite:1.4.0'
     compile 'io.grpc:grpc-stub:1.4.0'
     compile 'javax.annotation:javax.annotation-api:1.2'
     compile 'com.github.bumptech.glide:glide:3.7.0'
-    compile 'com.android.support:support-v4:22.2.1'
+    compile 'com.android.support:support-v4:25.3.1'
     compile 'com.google.firebase:firebase-messaging:10.0.1'
     compile 'com.google.android.gms:play-services-gcm:10.0.1'
     testCompile 'junit:junit:4.12'
