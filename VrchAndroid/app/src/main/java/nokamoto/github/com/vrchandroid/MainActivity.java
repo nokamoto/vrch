@@ -43,10 +43,10 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        chatActivity = new ChatActivityController(this);
-        chatActivity.onCreate(savedInstanceState);
-
         account = new AccountPreference(getBaseContext());
+
+        chatActivity = new ChatActivityController(this, account);
+        chatActivity.onCreate(savedInstanceState);
     }
 
     @Override

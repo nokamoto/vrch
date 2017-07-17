@@ -17,6 +17,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import io.grpc.ManagedChannel;
+import nokamoto.github.com.vrchandroid.AccountPreference;
 import nokamoto.github.com.vrchandroid.R;
 import nokamoto.github.com.vrchandroid.fcm.FcmChatMessage;
 import nokamoto.github.com.vrchandroid.fcm.FcmClient;
@@ -40,12 +41,12 @@ public class ChatActivityController {
     private MessageListAdapter messageAdapter;
     private RecyclerView.LayoutManager layoutManager;
 
-    private BroadcastReceiver receiver;
-
     private AppCompatActivity activity;
+    private AccountPreference account;
 
-    public ChatActivityController(AppCompatActivity activity) {
+    public ChatActivityController(AppCompatActivity activity, AccountPreference account) {
         this.activity = activity;
+        this.account = account;
     }
 
     public void onCreate(Bundle savedInstanceState) {
@@ -69,16 +70,10 @@ public class ChatActivityController {
 
         fcmClient = new FcmClient();
 
-        receiver = new FcmChatMessageReceiver(messageAdapter);
-
-        LocalBroadcastManager.getInstance(activity.getApplicationContext()).
-                registerReceiver(receiver, new IntentFilter(FcmChatMessage.INTENT_ACTION));
-
         GoogleApiAvailability.getInstance().makeGooglePlayServicesAvailable(activity);
     }
 
     public void onDestroy() {
-        LocalBroadcastManager.getInstance(activity.getApplicationContext()).unregisterReceiver(receiver);
     }
 
     public void sendMessage(View view) {
@@ -90,7 +85,7 @@ public class ChatActivityController {
             Button send = (Button) activity.findViewById(R.id.button_chatbox_send);
             send.setEnabled(false);
 
-            messageAdapter.add(new ChatMessage(WhoAmI.SELF, message));
+            messageAdapter.add(new ChatMessage(WhoAmI.SELF, message, account.displayName()));
 
             DialogueOuterClass.Dialogue dialogue = DialogueOuterClass.Dialogue.newBuilder().
                     setText(TextOuterClass.Text.newBuilder().setText(message)).setContext(context).build();
@@ -117,13 +112,13 @@ public class ChatActivityController {
         protected Services.Response doInBackground(Services.Request... requests) {
             Services.Request req = requests[0];
 
-            fcmClient.send(LOBBY, new FcmChatMessage(WhoAmI.SELF, req.getDialogue().getText().getText()));
-
             Services.Response res = call(req);
 
             if (res != null) {
-                fcmClient.send(LOBBY, new FcmChatMessage(WhoAmI.SELF, req.getDialogue().getText().getText()));
-                fcmClient.send(LOBBY, new FcmChatMessage(WhoAmI.KIRITAN, res.getDialogue().getText().getText()));
+                String request = req.getDialogue().getText().getText();
+                String response = res.getDialogue().getText().getText();
+                String displayName = account.displayName();
+                fcmClient.send(LOBBY, new FcmChatMessage(request, response, displayName));
             }
 
             return res;
@@ -142,14 +137,14 @@ public class ChatActivityController {
 
                     context = dialogue.getContext();
 
-                    messageAdapter.add(new ChatMessage(WhoAmI.KIRITAN, dialogue.getText().getText()));
+                    messageAdapter.add(ChatMessage.kiritan(dialogue.getText().getText()));
 
                     String filename = dialogue.getText().getText() + ".wav";
                     byte[] bytes = res.getVoice().getVoice().toByteArray();
 
                     wav.play(filename, bytes);
                 } else {
-                    messageAdapter.add(new ChatMessage(WhoAmI.KIRITAN, "Oops! Something went wrong."));
+                    messageAdapter.add(ChatMessage.kiritan("Oops! Something went wrong."));
                 }
 
             } catch (Exception e) {
