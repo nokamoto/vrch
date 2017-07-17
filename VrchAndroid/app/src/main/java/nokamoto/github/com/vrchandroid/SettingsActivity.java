@@ -16,6 +16,8 @@ import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.MenuItem;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.List;
 
 /**
@@ -31,6 +33,8 @@ import java.util.List;
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
     private final static String TAG = SettingsActivity.class.getSimpleName();
+
+    private static String uid;
 
     private static void onDisplayNameChanged(Preference preference, String value) {
         Log.i(TAG, "display name changed: " + value);
@@ -90,6 +94,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupActionBar();
+
+        uid = new AccountPreference(getBaseContext()).uid(FirebaseAuth.getInstance().getCurrentUser());
     }
 
     /**
@@ -150,6 +156,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             String displayNameKey = getResources().getString(R.string.pref_account_key_display_name);
             bindPreferenceSummaryToValue(findPreference(displayNameKey));
+
+            String uidKey = getResources().getString(R.string.pref_account_key_uid);
+            findPreference(uidKey).setSummary(uid);
         }
 
         @Override

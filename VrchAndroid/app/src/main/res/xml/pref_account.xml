@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
     <EditTextPreference
         android:capitalize="words"
         android:defaultValue="@string/pref_account_default_display_name"
@@ -9,4 +10,12 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="@string/pref_account_title_display_name" />
+
+    <Preference
+        android:enabled="true"
+        android:persistent="false"
+        android:key="@string/pref_account_key_uid"
+        android:title="@string/pref_account_title_uid"
+        android:summary="@string/pref_account_default_uid"/>
+
 </PreferenceScreen>
