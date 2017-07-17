@@ -29,7 +29,7 @@ public class FcmClient {
         try {
             Log.i(TAG, "send: " + message);
 
-            JSONObject json = new JSONObject().put("to", "/topics/" + topic).put("data", message.toJson());
+            JSONObject json = new JSONObject().put("to", "/topics/" + topic).put("notification", message.toJson());
 
             Request req = new Request.Builder().
                     addHeader("Authorization", "key=" + FCM_SERVERKEY).

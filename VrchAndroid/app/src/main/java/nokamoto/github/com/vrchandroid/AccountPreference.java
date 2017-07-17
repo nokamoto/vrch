@@ -10,7 +10,7 @@ public class AccountPreference {
         this.context = context;
     }
 
-    String displayName() {
+    public String displayName() {
         String key = context.getResources().getString(R.string.pref_account_key_display_name);
         String defaultValue = context.getResources().getString(R.string.pref_account_default_display_name);
         return PreferenceManager.getDefaultSharedPreferences(context).getString(key, defaultValue);

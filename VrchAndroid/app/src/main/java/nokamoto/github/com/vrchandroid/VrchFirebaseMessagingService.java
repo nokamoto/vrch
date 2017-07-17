@@ -1,12 +1,9 @@
 package nokamoto.github.com.vrchandroid;
 
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-
-import nokamoto.github.com.vrchandroid.fcm.FcmChatMessage;
 
 public class VrchFirebaseMessagingService extends FirebaseMessagingService {
     private static final String TAG = VrchFirebaseMessagingService.class.getSimpleName();
@@ -15,12 +12,10 @@ public class VrchFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.i(TAG, "received: " + remoteMessage.getFrom());
 
-        FcmChatMessage message = FcmChatMessage.fromRemoteMessage(remoteMessage);
-
-        Log.i(TAG, "message=" + message);
-
-        if (!message.isOwn(message)) {
-            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(message.toIntent());
+        RemoteMessage.Notification n = remoteMessage.getNotification();
+        if (n != null) {
+            Log.i(TAG, "notification received: not implemented yet.");
         }
     }
+
 }
