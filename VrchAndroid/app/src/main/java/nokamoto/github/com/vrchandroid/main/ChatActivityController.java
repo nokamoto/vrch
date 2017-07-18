@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Tasks;
 import com.google.common.base.Optional;
@@ -104,7 +106,6 @@ public class ChatActivityController {
             @Override
             public void onAdded(final FirebaseMessage message) {
                 Log.i(TAG, "added: " + message);
-                messageAdapter.add(message);
 
                 if (message.getWho() == WhoAmI.KIRITAN && message.getCreatedAt() >= startAt) {
                     voiceClient.uri(message).addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -114,9 +115,18 @@ public class ChatActivityController {
                                 wav.play(uri);
                             } catch (Exception e) {
                                 Log.e(TAG, "failed to play voice: " + message, e);
+                            } finally {
+                                messageAdapter.add(message);
                             }
                         }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            messageAdapter.add(message);
+                        }
                     });
+                } else {
+                    messageAdapter.add(message);
                 }
             }
         });

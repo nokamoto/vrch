@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.google.common.base.Optional;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.ServerValue;
 
 import org.json.JSONObject;
 
@@ -27,7 +28,7 @@ public class FirebaseMessage {
     private final static String UID = "uid";
     private final static String MESSAGE = "message";
     private final static String UUID = "uuid";
-    private final static String CREATED_AT = "created_at";
+    final static String CREATED_AT = "created_at";
 
     private FirebaseMessage(WhoAmI who, String displayName, String uid, String message, String uuid, long createdAt) {
         this.who = who;
@@ -39,14 +40,14 @@ public class FirebaseMessage {
     }
 
     public FirebaseMessage(WhoAmI who, String displayName, String uid, String message) {
-        this(who, displayName, uid, message, java.util.UUID.randomUUID().toString(), System.currentTimeMillis());
+        this(who, displayName, uid, message, java.util.UUID.randomUUID().toString(), 0);
     }
 
     public static FirebaseMessage kiritan(String message) {
         return new FirebaseMessage(WhoAmI.KIRITAN, "", "", message);
     }
 
-    public static Optional<FirebaseMessage> fromSnapshot(DataSnapshot snapshot) {
+    static Optional<FirebaseMessage> fromSnapshot(DataSnapshot snapshot) {
         try {
             Log.i(TAG, snapshot.getKey() + " " + snapshot.getValue());
             int who = Integer.parseInt((String) snapshot.child(WHO).getValue());
@@ -54,7 +55,7 @@ public class FirebaseMessage {
             String uid = (String)snapshot.child(UID).getValue();
             String message = (String)snapshot.child(MESSAGE).getValue();
             String uuid = (String)snapshot.child(UUID).getValue();
-            long createdAt = Long.parseLong((String) snapshot.child(CREATED_AT).getValue());
+            long createdAt = (long)snapshot.child(CREATED_AT).getValue();
             return Optional.of(new FirebaseMessage(WhoAmI.values()[who], displayName, uid, message, uuid, createdAt));
         } catch (Exception e) {
             Log.e(TAG, "from snapshot error", e);
@@ -62,14 +63,14 @@ public class FirebaseMessage {
         }
     }
 
-    public Map<String, Object> toMap() {
+    Map<String, Object> toMap() {
         HashMap<String, Object> m = new HashMap<>();
         m.put(WHO, String.valueOf(who.ordinal()));
         m.put(DISPLAY_NAME, displayName);
         m.put(UID, uid);
         m.put(MESSAGE, message);
         m.put(UUID, uuid);
-        m.put(CREATED_AT, String.valueOf(createdAt));
+        m.put(CREATED_AT, ServerValue.TIMESTAMP);
         return m;
     }
 

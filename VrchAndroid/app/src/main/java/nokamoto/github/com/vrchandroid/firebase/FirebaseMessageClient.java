@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class FirebaseMessageClient {
     private final static String TAG = FirebaseMessageClient.class.getSimpleName();
@@ -71,7 +72,10 @@ public class FirebaseMessageClient {
             }
         };
 
-        roomRef().addChildEventListener(this.listener);
+        roomRef().
+                orderByChild(FirebaseMessage.CREATED_AT).
+                startAt(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)).
+                addChildEventListener(this.listener);
     }
 
     public void onStop() {
