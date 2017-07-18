@@ -230,6 +230,7 @@ public class ChatActivityController {
             Button send = (Button)activity.findViewById(R.id.button_chatbox_send);
             send.setEnabled(true);
             if (res == null) {
+                Log.i(TAG, "Oops! Something went wrong.");
                 messageAdapter.add(FirebaseMessage.kiritan("Oops! Something went wrong."));
             }
         }

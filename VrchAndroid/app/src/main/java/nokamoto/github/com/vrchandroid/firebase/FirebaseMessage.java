@@ -44,7 +44,7 @@ public class FirebaseMessage {
     }
 
     public static FirebaseMessage kiritan(String message) {
-        return new FirebaseMessage(WhoAmI.KIRITAN, "", "", message);
+        return new FirebaseMessage(WhoAmI.KIRITAN, "", "", message, java.util.UUID.randomUUID().toString(), System.currentTimeMillis());
     }
 
     static Optional<FirebaseMessage> fromSnapshot(DataSnapshot snapshot) {
