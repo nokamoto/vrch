@@ -5,7 +5,7 @@
 - [gRPC Server](https://github.com/nokamoto/vrch#vrchgrpc)
 - [Windows Node](https://github.com/nokamoto/vrch#vrnode)
 - [Slack App](https://github.com/nokamoto/vrch#slackbridge)
-- [Android App](https://github.com/nokamoto/vrch#VrchAndroid)
+- [Android App](https://github.com/nokamoto/vrch#vrchandroid)
 
 ## vrchgrpc
 
