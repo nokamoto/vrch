@@ -50,6 +50,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        chatActivity.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        chatActivity.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         chatActivity.onDestroy();
