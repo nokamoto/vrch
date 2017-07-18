@@ -17,6 +17,10 @@
     <string name="pref_account_default_uid">null</string>
     <string name="pref_account_key_uid">account_uid</string>
 
+    <string name="pref_header_notification">Notification</string>
+    <string name="pref_notification_key_subscription">notification_subscription</string>
+    <string name="pref_notification_title_subscription">Subscription</string>
+
     <!-- Strings related to login -->
     <string name="title_activity_login">Sign in</string>
 

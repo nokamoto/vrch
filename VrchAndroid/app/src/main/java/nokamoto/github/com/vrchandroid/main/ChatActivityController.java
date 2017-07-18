@@ -48,7 +48,7 @@ import vrch.VrchServiceGrpc;
 
 public class ChatActivityController {
     private static final String TAG = ChatActivityController.class.getSimpleName();
-    private final static String LOBBY = "lobby";
+    public final static String LOBBY = "lobby";
 
     private String context;
     private ManagedChannel channel;
@@ -87,8 +87,6 @@ public class ChatActivityController {
         messageRecycler.setAdapter(messageAdapter);
 
         wav = new WavController(activity);
-
-        FirebaseMessaging.getInstance().subscribeToTopic(LOBBY);
 
         fcmClient = new FcmClient();
 
