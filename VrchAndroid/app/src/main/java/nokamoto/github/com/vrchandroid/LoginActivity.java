@@ -111,6 +111,7 @@ public class LoginActivity extends AppCompatActivity {
                         account.setDisplayName(displayName);
                         Intent i = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(i);
+                        finish();
                     } else {
                         Log.w(TAG, "signInAnonymously:failure", task.getException());
                         Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
