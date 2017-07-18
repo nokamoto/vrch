@@ -1,22 +1,20 @@
 package nokamoto.github.com.vrchandroid.main;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.common.base.Optional;
 import com.google.firebase.database.ChildEventListener;
@@ -26,14 +24,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageMetadata;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import io.grpc.ManagedChannel;
 import nokamoto.github.com.vrchandroid.AccountPreference;
@@ -42,6 +35,8 @@ import nokamoto.github.com.vrchandroid.R;
 import nokamoto.github.com.vrchandroid.firebase.FcmChatMessage;
 import nokamoto.github.com.vrchandroid.firebase.FcmClient;
 import nokamoto.github.com.vrchandroid.firebase.FirebaseMessage;
+import nokamoto.github.com.vrchandroid.firebase.FirebaseMessageClient;
+import nokamoto.github.com.vrchandroid.firebase.FirebaseVoiceClient;
 import nokamoto.github.com.vrchandroid.grpc.GrpcUtils;
 import nokamoto.github.com.vrchandroid.wav.WavController;
 import vrch.DialogueOuterClass;
@@ -52,9 +47,6 @@ import vrch.VrchServiceGrpc;
 public class ChatActivityController {
     private static final String TAG = ChatActivityController.class.getSimpleName();
     private final static String LOBBY = "lobby";
-    private final static String MESSAGES = "messages";
-    private final static String FIREBASE_STORAGE_REF = BuildConfig.FIREBASE_STORAGE_REF;
-    private final static String AUDIOS = "audios";
 
     private String context;
     private ManagedChannel channel;
@@ -68,10 +60,9 @@ public class ChatActivityController {
     private AppCompatActivity activity;
     private AccountPreference account;
 
-    private FirebaseDatabase database;
-    private ChildEventListener databaseListener;
+    private FirebaseVoiceClient voiceClient;
 
-    private FirebaseStorage storage;
+    private FirebaseMessageClient messageClient;
 
     public ChatActivityController(AppCompatActivity activity, AccountPreference account) {
         this.activity = activity;
@@ -101,75 +92,38 @@ public class ChatActivityController {
 
         GoogleApiAvailability.getInstance().makeGooglePlayServicesAvailable(activity);
 
-        database = FirebaseDatabase.getInstance();
+        voiceClient = new FirebaseVoiceClient();
 
-        storage = FirebaseStorage.getInstance();
+        messageClient = new FirebaseMessageClient(LOBBY);
     }
 
     public void onStart() {
         final long startAt = System.currentTimeMillis();
 
-        Query q = database.getReference().child(MESSAGES).child(LOBBY).limitToLast(100);
-        q.addListenerForSingleValueEvent(new ValueEventListener() {
+        messageClient.onStart(new FirebaseMessageClient.MessageEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot children : dataSnapshot.getChildren()) {
-                    Optional<FirebaseMessage> data = FirebaseMessage.fromSnapshot(children);
-                    Log.i(TAG, "query: " + data);
-                }
-            }
+            public void onAdded(final FirebaseMessage message) {
+                Log.i(TAG, "added: " + message);
+                messageAdapter.add(message);
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "canceled.", databaseError.toException());
+                if (message.getWho() == WhoAmI.KIRITAN && message.getCreatedAt() >= startAt) {
+                    voiceClient.uri(message).addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            try {
+                                wav.play(uri);
+                            } catch (Exception e) {
+                                Log.e(TAG, "failed to play voice: " + message, e);
+                            }
+                        }
+                    });
+                }
             }
         });
-
-        databaseListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Optional<FirebaseMessage> data = FirebaseMessage.fromSnapshot(dataSnapshot);
-                if (data.isPresent()) {
-                    Log.i(TAG, "added: " + data);
-                    FirebaseMessage message = data.get();
-                    messageAdapter.add(message);
-
-                    if (message.getWho() == WhoAmI.KIRITAN && message.getCreatedAt() >= startAt) {
-                        StorageReference storageRef = storage.getReferenceFromUrl(FIREBASE_STORAGE_REF);
-                        StorageReference audios = storageRef.child(AUDIOS);
-                        StorageReference audio = audios.child(message.getUuid() + ".wav");
-                        audio.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                            @Override
-                            public void onSuccess(Uri uri) {
-                                wav.play(uri);
-                            }
-                        });
-                    }
-                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "canceled.", databaseError.toException());
-            }
-        };
-
-        database.getReference().child(MESSAGES).child(LOBBY).addChildEventListener(databaseListener);
     }
 
     public void onStop() {
-        if (databaseListener != null) {
-            database.getReference().child(MESSAGES).child(LOBBY).removeEventListener(databaseListener);
-        }
+        messageClient.onStop();
     }
 
     public void onDestroy() {
@@ -179,6 +133,9 @@ public class ChatActivityController {
         EditText editText = (EditText) activity.findViewById(R.id.edittext_chatbox);
         String message = editText.getText().toString();
         editText.getText().clear();
+
+        InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
         if (!message.isEmpty()) {
             Button send = (Button) activity.findViewById(R.id.button_chatbox_send);
@@ -218,55 +175,41 @@ public class ChatActivityController {
             return FirebaseMessage.kiritan(msg);
         }
 
-        private void writeDatabase(FirebaseMessage message) {
-            try {
-                String pushed = database.getReference().child(MESSAGES).child(LOBBY).push().getKey();
-                Map<String, Object> childUpdates = new HashMap<>();
-                String key = String.format("/%s/%s/%s", MESSAGES, LOBBY, pushed);
-                childUpdates.put(key, message.toMap());
-
-                Tasks.await(database.getReference().updateChildren(childUpdates));
-
-                Log.i(TAG, "write realtime database: " + key + " " + message);
-            } catch (Exception e) {
-                Log.e(TAG, "realtime database failed: " + message, e);
-            }
+        private void callFcm(Services.Request req, Services.Response res) {
+            String request = req.getDialogue().getText().getText();
+            String response = res.getDialogue().getText().getText();
+            String displayName = account.displayName();
+            FcmChatMessage fcm = new FcmChatMessage(request, response, displayName);
+            fcmClient.send(LOBBY, fcm);
         }
 
         @Override
         protected FirebaseMessage doInBackground(Services.Request... requests) {
             Services.Request req = requests[0];
 
-            writeDatabase(toMessage(req));
-
             Services.Response res = call(req);
 
             if (res != null) {
-                FirebaseMessage msg = toMessage(res);
-                StorageReference storageRef = storage.getReferenceFromUrl(FIREBASE_STORAGE_REF);
-                StorageReference audios = storageRef.child(AUDIOS);
-
-                StorageMetadata metadata = new StorageMetadata.Builder().
-                        setContentType("audio/wav").build();
-
-                StorageReference audio = audios.child(msg.getUuid() + ".wav");
-
                 try {
-                    Tasks.await(audio.putBytes(res.getVoice().getVoice().toByteArray(), metadata));
-
-                    writeDatabase(msg);
-
-                    String request = req.getDialogue().getText().getText();
-                    String response = res.getDialogue().getText().getText();
-                    String displayName = account.displayName();
-                    FcmChatMessage fcm = new FcmChatMessage(request, response, displayName);
-                    fcmClient.send(LOBBY, fcm);
-                } catch (Exception e) {
-                    Log.e(TAG, "storage failed.", e);
+                    messageClient.write(toMessage(req));
+                } catch(Exception e) {
+                    Log.e(TAG, "failed to write request message:" + req, e);
                     return null;
                 }
 
-                return msg;
+                FirebaseMessage message = toMessage(res);
+
+                try {
+                    voiceClient.write(message, res.getVoice());
+                    messageClient.write(message);
+                } catch (Exception e) {
+                    Log.e(TAG, "failed to write response message: " + message, e);
+                    return null;
+                }
+
+                callFcm(req, res);
+
+                return message;
             }
 
             return null;
@@ -274,18 +217,10 @@ public class ChatActivityController {
 
         @Override
         protected void onPostExecute(FirebaseMessage res) {
-            try {
-                Button send = (Button)activity.findViewById(R.id.button_chatbox_send);
-                send.setEnabled(true);
-
-                if (res != null) {
-                    Log.d(this.toString(), res.toString());
-                } else {
-                    messageAdapter.add(FirebaseMessage.kiritan("Oops! Something went wrong."));
-                }
-
-            } catch (Exception e) {
-                Log.e(TAG, "failed to handle: " + res, e);
+            Button send = (Button)activity.findViewById(R.id.button_chatbox_send);
+            send.setEnabled(true);
+            if (res == null) {
+                messageAdapter.add(FirebaseMessage.kiritan("Oops! Something went wrong."));
             }
         }
     }
