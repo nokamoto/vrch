@@ -134,19 +134,22 @@ class MessageListAdapter extends RecyclerView.Adapter {
     }
 
     private class SentMessageHolder extends RecyclerView.ViewHolder {
-        TextView messageText, timeText;
+        TextView messageText, timeText, nameText;
 
         SentMessageHolder(View itemView) {
             super(itemView);
 
             messageText = (TextView) itemView.findViewById(R.id.text_message_body);
             timeText = (TextView) itemView.findViewById(R.id.text_message_time);
+            nameText = (TextView) itemView.findViewById(R.id.text_message_name);
         }
 
         void bind(FirebaseMessage message) {
             messageText.setText(message.getMessage());
 
             timeText.setText(formatDate(message.getCreatedAt()));
+
+            nameText.setText(message.getDisplayName());
         }
     }
 }
