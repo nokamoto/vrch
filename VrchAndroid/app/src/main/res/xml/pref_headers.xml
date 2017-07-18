@@ -7,4 +7,9 @@
         android:icon="@drawable/ic_account_box_black_24dp"
         android:title="@string/pref_header_account" />
 
+    <header
+        android:fragment="nokamoto.github.com.vrchandroid.SettingsActivity$NotificationPreferenceFragment"
+        android:icon="@drawable/ic_notifications_black_24dp"
+        android:title="@string/pref_header_notification" />
+
 </preference-headers>
