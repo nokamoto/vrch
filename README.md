@@ -1,6 +1,6 @@
 # vrch
 
-![Overview](https://user-images.githubusercontent.com/4374383/28245320-cf3d05c0-6a3e-11e7-82dd-4d1c159400bf.png)
+![Overview](https://user-images.githubusercontent.com/4374383/28328403-70bac30e-6c21-11e7-96d5-fe94c1be0c5e.png)
 
 - [gRPC Server](https://github.com/nokamoto/vrch#vrchgrpc)
 - [Windows Node](https://github.com/nokamoto/vrch#vrnode)
