@@ -29,14 +29,7 @@ public class MainActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
-
-            @Override
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                syncAccountName();
-            }
-        };
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -53,6 +46,7 @@ public class MainActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
         chatActivity.onStart();
+        syncAccountName();
     }
 
     @Override
@@ -109,7 +103,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void syncAccountName() {
-        TextView accountName = (TextView) findViewById(R.id.nav_account_name);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View header = navigationView.getHeaderView(0);
+        TextView accountName = (TextView) header.findViewById(R.id.nav_account_name);
         accountName.setText(account.displayName());
     }
 }
