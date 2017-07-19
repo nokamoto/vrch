@@ -38,6 +38,7 @@ import nokamoto.github.com.vrchandroid.firebase.FcmChatMessage;
 import nokamoto.github.com.vrchandroid.firebase.FcmClient;
 import nokamoto.github.com.vrchandroid.firebase.FirebaseMessage;
 import nokamoto.github.com.vrchandroid.firebase.FirebaseMessageClient;
+import nokamoto.github.com.vrchandroid.firebase.FirebaseRoom;
 import nokamoto.github.com.vrchandroid.firebase.FirebaseVoiceClient;
 import nokamoto.github.com.vrchandroid.grpc.GrpcUtils;
 import nokamoto.github.com.vrchandroid.wav.WavController;
@@ -50,7 +51,7 @@ public class ChatActivityController {
     private static final String TAG = ChatActivityController.class.getSimpleName();
     public final static String LOBBY = "lobby";
 
-    private String context;
+    private FirebaseRoom room;
     private ManagedChannel channel;
     private FcmClient fcmClient;
     private WavController wav;
@@ -73,8 +74,6 @@ public class ChatActivityController {
 
     public void onCreate(Bundle savedInstanceState) {
         activity.setVolumeControlStream(WavController.STREAM_TYPE);
-
-        context = "";
 
         channel = GrpcUtils.newChannel();
 
@@ -99,6 +98,8 @@ public class ChatActivityController {
 
     public void onStart() {
         final long startAt = System.currentTimeMillis();
+
+        sendEnabled(false);
 
         messageClient.onStart(new FirebaseMessageClient.MessageEventListener() {
             @Override
@@ -127,6 +128,17 @@ public class ChatActivityController {
                     messageAdapter.add(message);
                 }
             }
+        }, new FirebaseMessageClient.RoomValueListener() {
+            @Override
+            public void onValue(FirebaseRoom r) {
+                room = r;
+                sendEnabled(true);
+            }
+
+            @Override
+            public void onCancelled() {
+                // nop: may be crashed.
+            }
         });
     }
 
@@ -135,6 +147,11 @@ public class ChatActivityController {
     }
 
     public void onDestroy() {
+    }
+
+    public void sendEnabled(Boolean value) {
+        Button send = (Button) activity.findViewById(R.id.button_chatbox_send);
+        send.setEnabled(value);
     }
 
     public void sendMessage(View view) {
@@ -146,8 +163,12 @@ public class ChatActivityController {
         imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
         if (!message.isEmpty()) {
-            Button send = (Button) activity.findViewById(R.id.button_chatbox_send);
-            send.setEnabled(false);
+            sendEnabled(false);
+
+            String context = "";
+            if (room != null) {
+                context = room.getContext();
+            }
 
             DialogueOuterClass.Dialogue dialogue = DialogueOuterClass.Dialogue.newBuilder().
                     setText(TextOuterClass.Text.newBuilder().setText(message)).setContext(context).build();
@@ -199,6 +220,17 @@ public class ChatActivityController {
 
             if (res != null) {
                 try {
+                    if (room == null) {
+                        FirebaseRoom r = new FirebaseRoom(res.getDialogue().getContext());
+                        messageClient.write(r);
+                        room = r;
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "failed to write room:" + req, e);
+                    return null;
+                }
+
+                try {
                     messageClient.write(toMessage(req));
                 } catch(Exception e) {
                     Log.e(TAG, "failed to write request message:" + req, e);
@@ -225,8 +257,7 @@ public class ChatActivityController {
 
         @Override
         protected void onPostExecute(FirebaseMessage res) {
-            Button send = (Button)activity.findViewById(R.id.button_chatbox_send);
-            send.setEnabled(true);
+            sendEnabled(true);
             if (res == null) {
                 Log.i(TAG, "Oops! Something went wrong.");
                 messageAdapter.add(FirebaseMessage.kiritan("Oops! Something went wrong."));

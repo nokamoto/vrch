@@ -9,6 +9,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class FirebaseMessageClient {
     private final static String TAG = FirebaseMessageClient.class.getSimpleName();
     private final static String MESSAGES = "messages";
+    private final static String ROOMS = "rooms";
 
     private FirebaseDatabase database;
     private ChildEventListener listener;
@@ -32,6 +34,10 @@ public class FirebaseMessageClient {
     }
 
     private DatabaseReference roomRef() {
+        return database.getReference().child(ROOMS).child(room);
+    }
+
+    private DatabaseReference messageRef() {
         return database.getReference().child(MESSAGES).child(room);
     }
 
@@ -39,7 +45,12 @@ public class FirebaseMessageClient {
         void onAdded(FirebaseMessage message);
     }
 
-    public void onStart(final MessageEventListener listener) {
+    public interface RoomValueListener {
+        void onValue(FirebaseRoom room);
+        void onCancelled();
+    }
+
+    public void onStart(final MessageEventListener listener, final RoomValueListener valueListener) {
         this.listener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -68,29 +79,47 @@ public class FirebaseMessageClient {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, p + "canceled.", databaseError.toException());
+                Log.e(TAG, p + "cancelled.", databaseError.toException());
             }
         };
 
-        roomRef().
+        messageRef().
                 orderByChild(FirebaseMessage.CREATED_AT).
                 startAt(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)).
                 addChildEventListener(this.listener);
+
+        roomRef().addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                valueListener.onValue(FirebaseRoom.fromSnapshot(dataSnapshot).orNull());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i(TAG, p + "cancelled.", databaseError.toException());
+                valueListener.onCancelled();
+            }
+        });
     }
 
     public void onStop() {
         if (listener != null) {
-            roomRef().removeEventListener(listener);
+            messageRef().removeEventListener(listener);
         }
     }
 
     public void write(FirebaseMessage message) throws ExecutionException, InterruptedException {
-        Log.i(TAG, p + "write: " + message);
+        Log.i(TAG, p + "write message: " + message);
 
-        String pushed = roomRef().push().getKey();
+        String pushed = messageRef().push().getKey();
         Map<String, Object> updates = new HashMap<>();
         updates.put(pushed, message.toMap());
 
-        Tasks.await(roomRef().updateChildren(updates));
+        Tasks.await(messageRef().updateChildren(updates));
+    }
+
+    public void write(FirebaseRoom room) throws ExecutionException, InterruptedException {
+        Log.i(TAG, p + "write room: " + room);
+        Tasks.await(roomRef().setValue(room.toMap()));
     }
 }
