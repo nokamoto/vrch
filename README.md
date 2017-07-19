@@ -1,5 +1,8 @@
 # vrch
 
+[![Build Status](https://travis-ci.org/nokamoto/vrch.svg?branch=master)](https://travis-ci.org/nokamoto/vrch)
+[![CircleCI](https://circleci.com/gh/nokamoto/vrch/tree/master.svg?style=svg)](https://circleci.com/gh/nokamoto/vrch/tree/master)
+
 ![Overview](https://user-images.githubusercontent.com/4374383/28328403-70bac30e-6c21-11e7-96d5-fe94c1be0c5e.png)
 
 - [gRPC Server](https://github.com/nokamoto/vrch#vrchgrpc)
