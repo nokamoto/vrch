@@ -75,3 +75,6 @@ docker run -e "SLACK_TOKEN=[SLACK_TOKEN]" -e "VRCH_HOST=[EXTERNAL_IP]" -e "SLACK
 
 ## VrchAndroid
 https://play.google.com/apps/testing/nokamoto.github.com.vrchandroid
+
+beta公開のため以下のグループに入る必要があります。
+https://groups.google.com/forum/#!forum/nokamoto
