@@ -22,11 +22,8 @@
     <string name="pref_notification_title_subscription">Subscription</string>
 
     <!-- Strings related to login -->
-    <string name="title_activity_login">Sign in</string>
-
     <string name="prompt_display_name">Display name</string>
     <string name="action_sign_in">SIGN IN</string>
-    <string name="action_sign_in_short">SIGN IN</string>
     <string name="error_field_required">Field required</string>
     <string name="error_invalid_display_name">Invalid display name</string>
 

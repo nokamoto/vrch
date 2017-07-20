@@ -11,7 +11,7 @@ android {
     defaultConfig {
         applicationId "nokamoto.github.com.vrchandroid"
         minSdkVersion 21
-        targetSdkVersion 22
+        targetSdkVersion 25
         versionCode 4
         versionName "1.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -38,6 +38,10 @@ android {
 
     configurations.all {
         resolutionStrategy.force "com.google.code.findbugs:jsr305:2.0.1"
+    }
+
+    lintOptions {
+        abortOnError false
     }
 }
 
