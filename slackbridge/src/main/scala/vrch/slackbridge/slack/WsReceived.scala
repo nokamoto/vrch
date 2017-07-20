@@ -5,17 +5,21 @@ import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import play.api.libs.json.{JsValue, Json}
 import vrch.Request
 import vrch.VrchServiceGrpc.VrchServiceBlockingStub
+import vrch.slackbridge.firebase.{FirebaseMessage, FirebaseMessageClient, FirebaseStorageClient}
 
-import scalaj.http.MultiPart
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class WsReceived(activeChannel: SlackChannel,
                  context: AtomicReference[String],
                  stub: VrchServiceBlockingStub,
                  slackApi: SlackApi,
                  ack: AtomicLong,
-                 connected: RtmConnected) {
+                 connected: RtmConnected,
+                 firebase: FirebaseMessageClient,
+                 storage: FirebaseStorageClient) {
 
-  private[this] def message(input: JsValue): Unit = {
+  private[this] def message(input: JsValue): Unit = synchronized {
     input.as[RtmMessage] match {
       case message if message.channel != activeChannel.id =>
         println(s"${context.get()}: do not respond to channel ${message.channel}")
@@ -28,27 +32,25 @@ class WsReceived(activeChannel: SlackChannel,
 
       case message =>
         val req = Request().update(_.dialogue.text.text := message.text, _.dialogue.context := context.get())
+        println(s"${context.get()}: ${req.toString.take(100)}")
+
         val res = stub.talk(req)
 
-        println(s"${context.get()}: ${req.toString.take(100)} - ${res.toString.take(100)}")
+        println(s"${context.get()}: ${res.toString.take(100)}")
 
-        context.set(res.getDialogue.context)
+        val last = context.getAndSet(res.getDialogue.context)
+        if (context.get() != last) {
+          println(s"context changed: $last > ${context.get()}")
+        }
 
-        val file = MultiPart(
-          name = "file",
-          filename = s"${res.getDialogue.getText.text}.wav",
-          mime = "audio/wav",
-          data = res.getVoice.voice.toByteArray
-        )
+        val self = FirebaseMessage.self(req.getDialogue.getText.text)
+        val kiritan = FirebaseMessage.kiritan(res.getDialogue.getText.text)
 
-        val upload = slackApi.postFile[JsValue](
-          "/api/files.upload",
-          file,
-          ("filetype", "auto"),
-          ("channels", activeChannel.id)
-        )
+        storage.upload(s"${kiritan.uuid}.wav", res.getVoice.voice.toByteArray)
 
-        println(upload)
+        (self :: kiritan :: Nil).foreach { m =>
+          Await.result(firebase.write(m), 10.seconds)
+        }
     }
   }
 

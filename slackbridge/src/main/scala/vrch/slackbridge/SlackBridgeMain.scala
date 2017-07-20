@@ -7,24 +7,31 @@ import io.grpc.netty.NettyChannelBuilder
 import play.api.libs.json._
 import vrch.VrchServiceGrpc
 import vrch.grpc.GcpApiKeyInterceptor
-import vrch.grpc.ImplicitProperty._
+import vrch.slackbridge.firebase.Platform.{Android, Slack}
+import vrch.slackbridge.firebase.WhoAmI.{Kiritan, Self}
+import vrch.slackbridge.firebase.{FirebaseMessageClient, FirebaseStorageClient}
 import vrch.slackbridge.slack._
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scalaj.http.MultiPart
 
 object SlackBridgeMain {
   def main(args: Array[String]): Unit = {
-    val slackUrl = "slack.url".stringProp
-    val slackToken = "slack.token".stringProp
-    val slackChannel = "slack.channel".stringProp
-    val vrchHost = "vrch.host".stringProp
-    val vrchPort = "vrch.port".intProp
-    val apikey = "gcp.apikey".stringProp
-    val context = new AtomicReference[String]("vrch.context".stringProp)
+    val config = SlackBridgeConfig.default
 
-    val channel = NettyChannelBuilder.forAddress(vrchHost, vrchPort).
-      usePlaintext(true).intercept(new GcpApiKeyInterceptor(apikey)).build()
+    println(config)
+
+    val firebase = new FirebaseMessageClient(file = config.firebase.json, url = config.firebase.url, room = "lobby")
+    val context = new AtomicReference[String](Await.result(firebase.context(), 10.seconds).context)
+
+    val storage = new FirebaseStorageClient(file = config.firebase.json, bucket = config.firebase.bucket)
+
+    val channel = NettyChannelBuilder.forAddress(config.grpc.host, config.grpc.port).
+      usePlaintext(true).intercept(new GcpApiKeyInterceptor(config.grpc.apiKey)).build()
     val stub = VrchServiceGrpc.blockingStub(channel)
 
-    val slackApi = SlackApi(url = slackUrl, token = slackToken)
+    val slackApi = SlackApi(url = config.slack.url, token = config.slack.token)
 
     val channels = slackApi.post[SlackChannels](
       "/api/channels.list",
@@ -32,16 +39,24 @@ object SlackBridgeMain {
       ("exclude_members", "true")
     )
 
-    val activeChannel = channels.channels.find(_.name == slackChannel).
-      getOrElse(throw new RuntimeException(s"#$slackChannel not found."))
+    val activeChannel = channels.channels.find(_.name == config.slack.channel).
+      getOrElse(throw new RuntimeException(s"#${config.slack.channel} not found."))
 
     val id = new AtomicLong(0)
     val ack = new AtomicLong(0)
 
     def newClient(): WebsocketClient[String] = {
       val connected = slackApi.post[RtmConnected]("/api/rtm.connect")
+
       val received = new WsReceived(
-        activeChannel = activeChannel, context = context, stub = stub, ack = ack, connected = connected, slackApi = slackApi
+        activeChannel = activeChannel,
+        context = context,
+        stub = stub,
+        ack = ack,
+        connected = connected,
+        slackApi = slackApi,
+        firebase = firebase,
+        storage = storage
       )
 
       WebsocketClient[String](connected.url)(received.received)
@@ -49,6 +64,42 @@ object SlackBridgeMain {
 
     var client = newClient()
     var websocket = client.open()
+
+    firebase.addListener { message =>
+      message.who match {
+        case Self =>
+          message.platform match {
+            case Android =>
+              slackApi.post[JsValue](
+                "/api/chat.postMessage",
+                ("channel", activeChannel.id),
+                ("text", message.message),
+                ("username", s"${message.displayName}@Android")
+              )
+
+            case Slack => // nop
+          }
+
+        case Kiritan =>
+          val bytes: Array[Byte] = storage.download(s"${message.uuid}.wav")
+
+          val file = MultiPart(
+            name = "file",
+            filename = s"${message.message}.wav",
+            mime = "audio/wav",
+            data = bytes
+          )
+
+          val upload = slackApi.postFile[JsValue](
+            "/api/files.upload",
+            file,
+            ("filetype", "auto"),
+            ("channels", activeChannel.id)
+          )
+
+          println(upload)
+      }
+    }
 
     while (true) {
       Thread.sleep(10 * 1000)

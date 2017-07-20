@@ -34,6 +34,10 @@ val akka = Seq(libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5
 
 val websocket = Seq(libraryDependencies += "com.github.andyglow" %% "websocket-scala-client" % "0.2.4")
 
+val firebase = Seq(libraryDependencies += "com.google.firebase" % "firebase-admin" % "5.2.0")
+
+val storage = Seq(libraryDependencies += "com.google.cloud" % "google-cloud-storage" % "1.2.1")
+
 lazy val serverutil = (project in file("serverutil")).settings(commons)
 
 lazy val vr = (project in file("vr")).settings(commons, proto)
@@ -60,7 +64,7 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
 ).dependsOn(vr, vrgrpc, chgrpc)
 
 lazy val slackbridge = (project in file("slackbridge")).settings(
-  commons, json, http, websocket,
+  commons, json, http, websocket, firebase, storage,
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard

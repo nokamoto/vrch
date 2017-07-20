@@ -1,0 +1,84 @@
+package vrch.slackbridge.firebase
+
+import java.io.FileInputStream
+
+import com.google.firebase.{FirebaseApp, FirebaseOptions}
+import com.google.firebase.auth.FirebaseCredentials
+import com.google.firebase.database._
+import com.google.firebase.tasks.{OnCompleteListener, Task}
+
+import scala.concurrent.{Future, Promise}
+
+class FirebaseMessageClient(file: String, url: String, room: String) {
+  private[this] val serviceAccount = new FileInputStream(file)
+
+  private[this] val options = new FirebaseOptions.Builder()
+    .setCredential(FirebaseCredentials.fromCertificate(serviceAccount))
+    .setDatabaseUrl(url)
+    .build()
+
+  FirebaseApp.initializeApp(options)
+
+  private def roomRef(): DatabaseReference = FirebaseDatabase.getInstance().getReference(s"/rooms/$room")
+
+  private def messageRef(): DatabaseReference = FirebaseDatabase.getInstance().getReference(s"/messages/$room")
+
+  def context(): Future[FirebaseRoom] = {
+    val promise = Promise[FirebaseRoom]
+
+    roomRef().addListenerForSingleValueEvent(new ValueEventListener {
+      override def onCancelled(error: DatabaseError): Unit = promise.failure(error.toException)
+
+      override def onDataChange(snapshot: DataSnapshot): Unit = {
+        try {
+          promise.success(FirebaseRoom(snapshot))
+        } catch {
+          case e: Exception => promise.failure(e)
+        }
+      }
+    })
+
+    promise.future
+  }
+
+  def addListener(callback: FirebaseMessage => Unit): Unit = {
+    messageRef().orderByChild(FirebaseMessage.CREATED_AT).startAt(System.currentTimeMillis()).addChildEventListener(
+      new ChildEventListener {
+        override def onCancelled(error: DatabaseError): Unit = {
+          println(error.toException)
+          error.toException.printStackTrace()
+        }
+
+        override def onChildChanged(snapshot: DataSnapshot, previousChildName: String): Unit = ()
+
+        override def onChildMoved(snapshot: DataSnapshot, previousChildName: String): Unit = ()
+
+        override def onChildAdded(snapshot: DataSnapshot, previousChildName: String): Unit = {
+          try {
+            val message = FirebaseMessage(snapshot)
+            println(s"added: $message")
+            callback(message)
+          } catch {
+            case e: Exception => println(e)
+          }
+        }
+
+        override def onChildRemoved(snapshot: DataSnapshot): Unit = ()
+      }
+    )
+  }
+
+  def write(message: FirebaseMessage): Future[Unit] = {
+    println(s"write: $message")
+    val promise = Promise[Unit]
+    val pushed = messageRef().push().getKey
+
+    messageRef().child(pushed).setValue(message.toMap).addOnCompleteListener(new OnCompleteListener[Void] {
+      override def onComplete(task: Task[Void]): Unit = {
+        if (task.isSuccessful) promise.success(()) else promise.failure(task.getException)
+      }
+    })
+
+    promise.future
+  }
+}

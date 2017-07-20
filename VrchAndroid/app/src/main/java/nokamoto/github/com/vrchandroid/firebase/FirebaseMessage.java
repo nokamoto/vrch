@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import nokamoto.github.com.vrchandroid.main.Platform;
 import nokamoto.github.com.vrchandroid.main.WhoAmI;
 
 public class FirebaseMessage {
@@ -22,6 +23,7 @@ public class FirebaseMessage {
     private String message;
     private String uuid;
     private long createdAt;
+    private Platform platform;
 
     private final static String WHO = "who";
     private final static String DISPLAY_NAME = "display_name";
@@ -29,22 +31,24 @@ public class FirebaseMessage {
     private final static String MESSAGE = "message";
     private final static String UUID = "uuid";
     final static String CREATED_AT = "created_at";
+    private final static String PLATFORM = "platform";
 
-    private FirebaseMessage(WhoAmI who, String displayName, String uid, String message, String uuid, long createdAt) {
+    private FirebaseMessage(WhoAmI who, String displayName, String uid, String message, String uuid, long createdAt, Platform platform) {
         this.who = who;
         this.displayName = displayName;
         this.uid = uid;
         this.message = message;
         this.uuid = uuid;
         this.createdAt = createdAt;
+        this.platform = platform;
     }
 
     public FirebaseMessage(WhoAmI who, String displayName, String uid, String message) {
-        this(who, displayName, uid, message, java.util.UUID.randomUUID().toString(), 0);
+        this(who, displayName, uid, message, java.util.UUID.randomUUID().toString(), 0, Platform.ANDROID);
     }
 
     public static FirebaseMessage kiritan(String message) {
-        return new FirebaseMessage(WhoAmI.KIRITAN, "", "", message, java.util.UUID.randomUUID().toString(), System.currentTimeMillis());
+        return new FirebaseMessage(WhoAmI.KIRITAN, "", "", message, java.util.UUID.randomUUID().toString(), System.currentTimeMillis(), Platform.ANDROID);
     }
 
     static Optional<FirebaseMessage> fromSnapshot(DataSnapshot snapshot) {
@@ -56,7 +60,8 @@ public class FirebaseMessage {
             String message = (String)snapshot.child(MESSAGE).getValue();
             String uuid = (String)snapshot.child(UUID).getValue();
             long createdAt = (long)snapshot.child(CREATED_AT).getValue();
-            return Optional.of(new FirebaseMessage(WhoAmI.values()[who], displayName, uid, message, uuid, createdAt));
+            int platform = Integer.parseInt((String)snapshot.child(PLATFORM).getValue());
+            return Optional.of(new FirebaseMessage(WhoAmI.values()[who], displayName, uid, message, uuid, createdAt, Platform.values()[platform]));
         } catch (Exception e) {
             Log.e(TAG, "from snapshot error", e);
             return Optional.absent();
@@ -71,6 +76,7 @@ public class FirebaseMessage {
         m.put(MESSAGE, message);
         m.put(UUID, uuid);
         m.put(CREATED_AT, ServerValue.TIMESTAMP);
+        m.put(PLATFORM, String.valueOf(platform.ordinal()));
         return m;
     }
 
