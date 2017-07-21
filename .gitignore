@@ -8,3 +8,4 @@ vrnode/.vs/
 vrnode/vrnode/bin/
 vrnode/vrnode/obj/
 vrnode/vrnode/vrnode.csproj.user
+docker/*.json

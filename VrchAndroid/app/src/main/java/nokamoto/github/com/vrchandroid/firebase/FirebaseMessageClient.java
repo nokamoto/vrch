@@ -88,7 +88,7 @@ public class FirebaseMessageClient {
                 startAt(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)).
                 addChildEventListener(this.listener);
 
-        roomRef().addValueEventListener(new ValueEventListener() {
+        roomRef().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 valueListener.onValue(FirebaseRoom.fromSnapshot(dataSnapshot).orNull());

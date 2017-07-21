@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/nokamoto/vrch.svg?branch=master)](https://travis-ci.org/nokamoto/vrch)
 [![CircleCI](https://circleci.com/gh/nokamoto/vrch/tree/master.svg?style=svg)](https://circleci.com/gh/nokamoto/vrch/tree/master)
 
-![Overview](https://user-images.githubusercontent.com/4374383/28328403-70bac30e-6c21-11e7-96d5-fe94c1be0c5e.png)
+![Overview](https://user-images.githubusercontent.com/4374383/28465840-2b129796-6e65-11e7-99ac-87be6aaec9ef.png)
 
 - [gRPC Server](https://github.com/nokamoto/vrch#vrchgrpc)
 - [Windows Node](https://github.com/nokamoto/vrch#vrnode)
@@ -68,8 +68,21 @@ vrnode.exe [EXTERNAL_IP] 80 [Voiceroid Wave Files Directory] [GCP_API_KEY]
 
 Slack 上での会話を行うために [Bot Users](https://api.slack.com/bot-users) を作成し起動します。
 
+[Add the Firebase Admin SDK to Your Server](https://firebase.google.com/docs/admin/setup) で `firebase-adminsdk.json` と `https://<DATABASE_NAME>.firebaseio.com/` を取得します。
+
+[Firebase Console](https://console.firebase.google.com) で `gs://<BUCKET>` を取得します。
+
 ```
-docker run -e "SLACK_TOKEN=[SLACK_TOKEN]" -e "VRCH_HOST=[EXTERNAL_IP]" -e "SLACK_CHANNEL=[SLACK_CHANNEL]" -e "GCP_API_KEY=[GCP_API_KEY]" -d nokamotohub/slackbridge
+docker run\
+    -e "SLACK_TOKEN=[SLACK_TOKEN]"\
+    -e "GRPC_HOST=[EXTERNAL_IP]"\
+    -e "SLACK_CHANNEL=[SLACK_CHANNEL]"\
+    -e "GCP_API_KEY=[GCP_API_KEY]"\
+    -e "FIREBASE_ADMIN_SDK_JSON=[FIREBASE_ADMIN_SDK_JSON]"\
+    -e "FIREBASE_ADMIN_SDK_URL=[FIREBASE_ADMIN_SDK_URL]"\
+    -e "FIREBASE_STORAGE_BUCKET=[FIREBASE_STORAGE_BUCKET]"\
+    -v [/path/to/firebase-adminsdk.json]:[FIREBASE_ADMIN_SDK_JSON]\
+    -d nokamotohub/slackbridge
 ```
 
 チャンネル上の発言に反応して音声がアップロードされます。
