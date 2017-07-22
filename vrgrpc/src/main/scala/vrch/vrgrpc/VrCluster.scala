@@ -5,19 +5,21 @@ import akka.pattern.ask
 import io.grpc.stub.StreamObserver
 import vrch.vrgrpc.VrActor.IncomingObserver
 import vrch.vrgrpc.VrClusterActor.{Info, Join}
-import vrch.{ClusterInfo, Outgoing, Text, Voice}
+import vrch._
 
 import scala.concurrent.{Await, Future}
 
-trait VrCluster extends UseVrConfig {
+trait VrCluster extends UseVrConfig with Logger {
   private[this] val system = ActorSystem("vr-cluster")
 
   private[this] val cluster = system.actorOf(VrClusterActor.props)
 
   def join(out: StreamObserver[Outgoing]): IncomingObserver = {
     val ref = system.actorOf(VrActor.props(out))
+
     cluster ! Join(ref)
-    println(s"join $ref")
+    logger.info(s"join: $ref")
+
     new IncomingObserver(self = ref)
   }
 
@@ -26,7 +28,7 @@ trait VrCluster extends UseVrConfig {
   def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.requestTimeout).mapTo[Voice]
 
   def shutdown(): Unit = {
-    println(s"shutdown $system")
+    logger.info(s"shutdown: $system")
     Await.result(system.terminate(), vrConfig.shutdownTimeout)
   }
 }

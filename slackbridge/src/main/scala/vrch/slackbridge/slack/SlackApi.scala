@@ -3,12 +3,13 @@ package vrch.slackbridge.slack
 import java.net.URL
 
 import play.api.libs.json._
+import vrch.Logger
 
 import scalaj.http.{Http, HttpResponse, MultiPart}
 
-case class SlackApi(url: String, token: String) {
+case class SlackApi(url: String, token: String) extends Logger {
   private[this] def as[A](path: String, res: HttpResponse[String])(implicit reads: Reads[A]): A = {
-    println(s"$path - ${res.toString.take(100)})")
+    logger.debug(s"$path - $res")
 
     reads.reads(Json.parse(res.body)) match {
       case JsSuccess(value, _) => value

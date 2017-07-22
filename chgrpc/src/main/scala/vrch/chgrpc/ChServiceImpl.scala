@@ -4,13 +4,13 @@ import java.net.URL
 
 import play.api.libs.json._
 import vrch.ChServiceGrpc.ChService
-import vrch.Dialogue
+import vrch.{Dialogue, Logger}
 import vrch.docomo.{DocomoDialogueRequest, DocomoDialogueResponse}
 
 import scala.concurrent.Future
 import scalaj.http.Http
 
-trait ChServiceImpl extends ChService with UseChConfig {
+trait ChServiceImpl extends ChService with UseChConfig with Logger {
   private[this] lazy val apiKey = chConfig.apiKey
 
   private[this] lazy val url = new URL(new URL(chConfig.url), "/dialogue/v1/dialogue").toString
@@ -22,12 +22,11 @@ trait ChServiceImpl extends ChService with UseChConfig {
       DocomoDialogueRequest(utt = request.getText.text, context = Some(request.context).find(_ != ""))
     )
 
-    println(body)
-
     val req = Http(url).param("APIKEY", apiKey).headers(headers).postData(body.toString())
-    val res = req.asString
+    logger.debug(s"talk request: $req")
 
-    println(s"${req.toString().take(100)} - ${res.toString.take(100)}")
+    val res = req.asString
+    logger.debug(s"talk response: $res")
 
     Json.parse(res.body).validate[DocomoDialogueResponse].fold(
       invalid => Future.failed(JsResultException(invalid)),

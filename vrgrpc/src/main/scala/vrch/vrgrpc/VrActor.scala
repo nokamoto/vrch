@@ -1,10 +1,10 @@
 package vrch.vrgrpc
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import io.grpc.stub.StreamObserver
-import vrch.{Incoming, Outgoing, Text}
+import vrch.{Incoming, Logger, Outgoing, Text}
 
-class VrActor(out: StreamObserver[Outgoing]) extends Actor {
+class VrActor(out: StreamObserver[Outgoing]) extends Actor with ActorLogging {
   private[this] var last: Option[ActorRef] = None
 
   private[this] def outgoing(value: Outgoing): Unit = {
@@ -12,7 +12,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
       out.onNext(value)
     } catch {
       case e: Throwable =>
-        println(s"$self: $e")
+        log.error(e, "{} outgoing failed.", self)
         context.stop(self)
     }
   }
@@ -20,7 +20,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
   override def postStop(): Unit = {
     super.postStop()
 
-    println(s"$self postStop")
+    log.info("{} post stop called.", self)
 
     out.onCompleted()
   }
@@ -54,22 +54,22 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor {
   }
 }
 
-object VrActor {
+object VrActor extends Logger {
   def props(out: StreamObserver[Outgoing]): Props = Props(new VrActor(out))
 
   class IncomingObserver(self: ActorRef) extends StreamObserver[Incoming] {
     override def onError(t: Throwable): Unit = {
-      println(s"$self error: $t")
+      logger.error(s"$self error.", t)
       self ! PoisonPill
     }
 
     override def onCompleted(): Unit = {
-      println(s"$self completed.")
+      logger.info(s"$self completed.")
       self ! PoisonPill
     }
 
     override def onNext(value: Incoming): Unit = {
-      println(s"$self got: $value".take(100))
+      logger.debug(s"$self next: $value")
       self ! value
     }
   }

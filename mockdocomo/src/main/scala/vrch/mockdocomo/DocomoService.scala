@@ -17,9 +17,6 @@ object DocomoService {
     val svc = HttpService {
       case req @ POST -> Root / "dialogue" / "v1" / "dialogue" =>
         req.decode[String] { j =>
-
-          println(s"receive $j")
-
           expected.set(((req, j) :: expected.get().reverse).reverse)
           Ok(Json.toJson(q.dequeue()).toString()).putHeaders(Header("Content-Type", "application/json"))
         }

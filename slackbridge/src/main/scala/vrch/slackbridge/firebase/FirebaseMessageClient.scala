@@ -2,14 +2,14 @@ package vrch.slackbridge.firebase
 
 import java.io.FileInputStream
 
-import com.google.firebase.{FirebaseApp, FirebaseOptions}
 import com.google.firebase.auth.FirebaseCredentials
 import com.google.firebase.database._
 import com.google.firebase.tasks.{OnCompleteListener, Task}
+import com.google.firebase.{FirebaseApp, FirebaseOptions}
 
 import scala.concurrent.{Future, Promise}
 
-class FirebaseMessageClient(file: String, url: String, room: String) {
+class FirebaseMessageClient(file: String, url: String, room: String) extends vrch.Logger {
   private[this] val serviceAccount = new FileInputStream(file)
 
   private[this] val options = new FirebaseOptions.Builder()
@@ -44,10 +44,7 @@ class FirebaseMessageClient(file: String, url: String, room: String) {
   def addListener(callback: FirebaseMessage => Unit): Unit = {
     messageRef().orderByChild(FirebaseMessage.CREATED_AT).startAt(System.currentTimeMillis()).addChildEventListener(
       new ChildEventListener {
-        override def onCancelled(error: DatabaseError): Unit = {
-          println(error.toException)
-          error.toException.printStackTrace()
-        }
+        override def onCancelled(error: DatabaseError): Unit = logger.error("cancelled.", error.toException)
 
         override def onChildChanged(snapshot: DataSnapshot, previousChildName: String): Unit = ()
 
@@ -56,10 +53,12 @@ class FirebaseMessageClient(file: String, url: String, room: String) {
         override def onChildAdded(snapshot: DataSnapshot, previousChildName: String): Unit = {
           try {
             val message = FirebaseMessage(snapshot)
-            println(s"added: $message")
+
+            logger.info(s"added: $message")
+
             callback(message)
           } catch {
-            case e: Exception => println(e)
+            case e: Exception => logger.error("on child added failed.", e)
           }
         }
 
@@ -69,7 +68,8 @@ class FirebaseMessageClient(file: String, url: String, room: String) {
   }
 
   def write(message: FirebaseMessage): Future[Unit] = {
-    println(s"write: $message")
+    logger.info(s"write: $message")
+
     val promise = Promise[Unit]
     val pushed = messageRef().push().getKey
 

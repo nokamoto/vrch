@@ -84,7 +84,7 @@ class VrServiceSpec extends FlatSpec {
   }
 }
 
-object VrServiceSpec extends AvailablePort with Suite {
+object VrServiceSpec extends AvailablePort with Suite with Logger {
   def clusterInfo(channel: ManagedChannel): ClusterInfo = VrClusterServiceGrpc.blockingStub(channel).info(Empty())
 
   def expect(timeout: FiniteDuration)(f: => Assertion): Unit = {
@@ -112,7 +112,7 @@ object VrServiceSpec extends AvailablePort with Suite {
 
   def observer(f: Outgoing => Unit): StreamObserver[Outgoing] = {
     new StreamObserver[Outgoing] {
-      override def onError(t: Throwable): Unit = println(t)
+      override def onError(t: Throwable): Unit = logger.error("outgoing stream observer error.", t)
 
       override def onCompleted(): Unit = ()
 
