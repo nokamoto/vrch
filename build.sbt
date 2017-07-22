@@ -1,8 +1,3 @@
-
-val commons = Seq(scalaVersion := "2.11.8", libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test")
-
-commons
-
 val proto = Seq(
   PB.targets in Compile := Seq(
     PB.gens.java(com.trueaccord.scalapb.compiler.Version.protobufVersion) -> ((sourceManaged in Compile).value / "protobuf-java"),
@@ -32,11 +27,21 @@ val http4s = Seq(libraryDependencies ++=
 
 val akka = Seq(libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.3")
 
-val websocket = Seq(libraryDependencies += "com.github.andyglow" %% "websocket-scala-client" % "0.2.4")
+val websocket = Seq(
+  libraryDependencies += "com.github.andyglow" %% "websocket-scala-client" % "0.2.4" exclude("org.slf4j", "slf4j-simple")
+)
 
 val firebase = Seq(libraryDependencies += "com.google.firebase" % "firebase-admin" % "5.2.0")
 
 val storage = Seq(libraryDependencies += "com.google.cloud" % "google-cloud-storage" % "1.2.1")
+
+val logback = Seq(libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3")
+
+val scalatest = Seq(libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test")
+
+val commons = Seq(scalaVersion := "2.11.8") ++ logback ++ scalatest
+
+commons
 
 lazy val serverutil = (project in file("serverutil")).settings(commons)
 

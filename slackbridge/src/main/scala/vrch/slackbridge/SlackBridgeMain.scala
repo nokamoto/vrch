@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.github.andyglow.websocket.WebsocketClient
 import io.grpc.netty.NettyChannelBuilder
 import play.api.libs.json._
-import vrch.VrchServiceGrpc
+import vrch.{Logger, VrchServiceGrpc}
 import vrch.grpc.GcpApiKeyInterceptor
 import vrch.slackbridge.firebase.Platform.{Android, Slack}
 import vrch.slackbridge.firebase.WhoAmI.{Kiritan, Self}
@@ -16,11 +16,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scalaj.http.MultiPart
 
-object SlackBridgeMain {
+object SlackBridgeMain extends Logger {
   def main(args: Array[String]): Unit = {
     val config = SlackBridgeConfig.default
 
-    println(config)
+    logger.debug(s"props: $config")
 
     val firebase = new FirebaseMessageClient(file = config.firebase.json, url = config.firebase.url, room = "lobby")
     val context = new AtomicReference[String](Await.result(firebase.context(), 10.seconds).context)
@@ -66,16 +66,20 @@ object SlackBridgeMain {
     var websocket = client.open()
 
     firebase.addListener { message =>
+      logger.info(s"receive $message")
+
       message.who match {
         case Self =>
           message.platform match {
             case Android =>
-              slackApi.post[JsValue](
+              val res = slackApi.post[JsValue](
                 "/api/chat.postMessage",
                 ("channel", activeChannel.id),
                 ("text", message.message),
                 ("username", s"${message.displayName}@Android")
               )
+
+              logger.info(s"/api/chat.postMessage - $res")
 
             case Slack => // nop
           }
@@ -97,7 +101,7 @@ object SlackBridgeMain {
             ("channels", activeChannel.id)
           )
 
-          println(upload)
+          logger.info(s"/api/files.upload - $upload")
       }
     }
 
@@ -106,13 +110,13 @@ object SlackBridgeMain {
 
       try {
         if (ack.get() != id.get()) {
-          println("ping/pong failed and shutdown now...")
+          logger.info("ping/pong failed and shutdown now...")
           client.shutdownSync()
 
-          println("sleep 10 seconds...")
+          logger.info("sleep 10 seconds...")
           Thread.sleep(10 * 1000)
 
-          println("reconnect...")
+          logger.info("reconnect...")
           client = newClient()
           websocket = client.open()
 
@@ -121,13 +125,13 @@ object SlackBridgeMain {
         } else {
           val ping = Json.obj("id" -> id.incrementAndGet(), "type" -> "ping").toString()
 
-          println(ping)
+          logger.info(ping)
 
           websocket ! ping
         }
       } catch {
         case t: Throwable =>
-          println(t)
+          logger.error("ping/pong exception raised.", t)
       }
     }
   }
