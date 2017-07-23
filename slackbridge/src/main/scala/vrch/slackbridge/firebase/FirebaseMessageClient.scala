@@ -9,8 +9,10 @@ import com.google.firebase.{FirebaseApp, FirebaseOptions}
 
 import scala.concurrent.{Future, Promise}
 
-class FirebaseMessageClient(file: String, url: String, room: String) extends vrch.Logger {
-  private[this] val serviceAccount = new FileInputStream(file)
+class FirebaseMessageClient(config: FirebaseConfig, room: String) extends vrch.Logger {
+  import config._
+
+  private[this] val serviceAccount = new FileInputStream(json)
 
   private[this] val options = new FirebaseOptions.Builder()
     .setCredential(FirebaseCredentials.fromCertificate(serviceAccount))
