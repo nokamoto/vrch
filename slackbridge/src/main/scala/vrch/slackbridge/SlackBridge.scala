@@ -10,20 +10,21 @@ import vrch.grpc.GcpApiKeyInterceptor
 import vrch.slackbridge.slack._
 import vrch.slackbridge.slack.value._
 import vrch.{Logger, Request, Response, VrchServiceGrpc}
+import vrchcfg.SlackbridgeCfg
 
 import scalaj.http.MultiPart
 
-abstract class SlackBridge(protected[this] val config: SlackBridgeConfig) extends Logger {
+abstract class SlackBridge(protected[this] val config: SlackbridgeCfg) extends Logger {
   protected[this] def context: AtomicReference[String]
 
   private[this] val channel: ManagedChannel = {
-    NettyChannelBuilder.forAddress(config.grpc.host, config.grpc.port).
-      usePlaintext(true).intercept(new GcpApiKeyInterceptor(config.grpc.apiKey)).build()
+    NettyChannelBuilder.forAddress(config.getGrpc.host, config.getGrpc.port).
+      usePlaintext(true).intercept(new GcpApiKeyInterceptor(config.getGrpc.apiKey)).build()
   }
 
   private[this] def stub: VrchServiceGrpc.VrchServiceBlockingStub = VrchServiceGrpc.blockingStub(channel)
 
-  protected[this] val slackApi = SlackApi(config.slack)
+  protected[this] val slackApi = SlackApi(config.getSlack)
 
   protected[this] val listenedChannel: SlackChannel = {
     val channels = slackApi.post[SlackChannels](
@@ -32,8 +33,8 @@ abstract class SlackBridge(protected[this] val config: SlackBridgeConfig) extend
       ("exclude_members", "true")
     )
 
-    channels.channels.find(_.name == config.slack.channel).
-      getOrElse(throw new RuntimeException(s"#${config.slack.channel} not found."))
+    channels.channels.find(_.name == config.getSlack.channel).
+      getOrElse(throw new RuntimeException(s"#${config.getSlack.channel} not found."))
   }
 
   private[this] val ack = new AtomicLong(0)

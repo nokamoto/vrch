@@ -74,15 +74,38 @@ Slack 上での会話を行うために [Bot Users](https://api.slack.com/bot-us
 
 ```
 docker run\
-    -e "SLACK_TOKEN=[SLACK_TOKEN]"\
-    -e "GRPC_HOST=[EXTERNAL_IP]"\
-    -e "SLACK_CHANNEL=[SLACK_CHANNEL]"\
-    -e "GCP_API_KEY=[GCP_API_KEY]"\
-    -e "FIREBASE_ADMIN_SDK_JSON=[FIREBASE_ADMIN_SDK_JSON]"\
-    -e "FIREBASE_ADMIN_SDK_URL=[FIREBASE_ADMIN_SDK_URL]"\
-    -e "FIREBASE_STORAGE_BUCKET=[FIREBASE_STORAGE_BUCKET]"\
-    -v [/path/to/firebase-adminsdk.json]:[FIREBASE_ADMIN_SDK_JSON]\
+    -e "CONFIG_FILE=[/path/to/application.conf]"\
+    -v [/path/to/local-volume]:[/path/to/docker-volume]\
     -d nokamotohub/slackbridge
+```
+
+`application.conf` は以下の設定をします。
+
+```
+grpc {
+  host = [GCP_HOST]
+
+  port = [GCP_PORT]
+
+  api_key = [GCP_API_KEY]
+}
+
+slack {
+  url = "https://<slack>.com"
+
+  token = [SLACK_TOKEN]
+
+  channel = [SLACK_CHANNEL]
+}
+
+# optional (empty if run in standalone)
+firebase {
+  adminsdk_json_path = [/path/to/adminsdk.json]
+
+  adminsdk_url = "https://<app>.firebaseio.com"
+
+  storage_bucket = "<app>.appspot.com"
+}
 ```
 
 チャンネル上の発言に反応して音声がアップロードされます。

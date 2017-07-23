@@ -39,13 +39,15 @@ val logback = Seq(libraryDependencies += "ch.qos.logback" % "logback-classic" % 
 
 val scalatest = Seq(libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test")
 
+val config = Seq(libraryDependencies += "com.typesafe" % "config" % "1.3.1")
+
 val commons = Seq(scalaVersion := "2.11.8") ++ logback ++ scalatest
 
 commons
 
 lazy val serverutil = (project in file("serverutil")).settings(commons)
 
-lazy val vr = (project in file("vr")).settings(commons, proto)
+lazy val vr = (project in file("vr")).settings(commons, proto, config)
 
 lazy val vrgrpc = (project in file("vrgrpc")).settings(commons, akka).dependsOn(vr, serverutil)
 
