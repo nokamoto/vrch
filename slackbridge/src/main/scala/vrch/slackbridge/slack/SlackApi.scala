@@ -7,7 +7,9 @@ import vrch.Logger
 
 import scalaj.http.{Http, HttpResponse, MultiPart}
 
-case class SlackApi(url: String, token: String) extends Logger {
+case class SlackApi(config: SlackConfig) extends Logger {
+  import config._
+
   private[this] def as[A](path: String, res: HttpResponse[String])(implicit reads: Reads[A]): A = {
     logger.debug(s"$path - $res")
 

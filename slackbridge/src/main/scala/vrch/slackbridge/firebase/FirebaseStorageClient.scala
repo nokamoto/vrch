@@ -5,10 +5,12 @@ import java.io._
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.google.cloud.storage.StorageOptions
 
-class FirebaseStorageClient(file: String, bucket: String) {
+class FirebaseStorageClient(config: FirebaseConfig) {
+  import config._
+
   private[this] val AUDIOS = "audios"
 
-  private[this] val serviceAccount = new FileInputStream(file)
+  private[this] val serviceAccount = new FileInputStream(json)
 
   private[this] val storage = {
     StorageOptions.newBuilder().setCredentials(ServiceAccountCredentials.fromStream(serviceAccount)).build().getService

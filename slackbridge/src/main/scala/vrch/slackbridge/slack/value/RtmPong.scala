@@ -1,4 +1,4 @@
-package vrch.slackbridge.slack
+package vrch.slackbridge.slack.value
 
 import play.api.libs.json.{Json, OFormat}
 

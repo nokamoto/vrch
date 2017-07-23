@@ -1,7 +1,7 @@
-package vrch.slackbridge.slack
+package vrch.slackbridge.slack.value
 
 import play.api.libs.json.{Json, OFormat}
-import vrch.slackbridge.slack.RtmConnected.Self
+import vrch.slackbridge.slack.value.RtmConnected.Self
 
 case class RtmConnected(url: String, self: Self)
 
