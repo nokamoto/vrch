@@ -52,12 +52,14 @@ abstract class SlackBridge(protected[this] val config: SlackbridgeCfg) extends L
         logger.info(s"${context.get()}: $req")
 
         val res = stub.talk(req)
-        logger.info(s"${context.get()}: $res")
+        logger.info(s"${context.get()}: ${res.getDialogue}")
 
         val last = context.getAndSet(res.getDialogue.context)
         if (context.get() != last) {
           logger.info(s"context changed: $last > ${context.get()}")
         }
+
+        call(req, res)
       }
     )
 
