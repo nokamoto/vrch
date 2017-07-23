@@ -5,18 +5,19 @@ import java.util.concurrent.atomic.AtomicReference
 import play.api.libs.json.JsValue
 import vrch.slackbridge.firebase.Platform.{Android, Slack}
 import vrch.slackbridge.firebase.WhoAmI.{Kiritan, Self}
-import vrch.slackbridge.firebase.{FirebaseConfig, FirebaseMessage, FirebaseMessageClient, FirebaseStorageClient}
+import vrch.slackbridge.firebase.{FirebaseMessage, FirebaseMessageClient, FirebaseStorageClient}
 import vrch.{Request, Response}
+import vrchcfg.SlackbridgeCfg
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class FirebaseSlackBridge(config: SlackBridgeConfig, firebaseConfig: FirebaseConfig) extends SlackBridge(config) {
-  private[this] val firebase = new FirebaseMessageClient(config = firebaseConfig, room = "lobby")
+class FirebaseSlackBridge(config: SlackbridgeCfg) extends SlackBridge(config) {
+  private[this] val firebase = new FirebaseMessageClient(config = config.getFirebase, room = "lobby")
 
   protected[this] override val context = new AtomicReference[String](Await.result(firebase.context(), 10.seconds).context)
 
-  private[this] val storage = new FirebaseStorageClient(firebaseConfig)
+  private[this] val storage = new FirebaseStorageClient(config.getFirebase)
 
   firebase.addListener { message =>
     logger.info(s"receive $message")

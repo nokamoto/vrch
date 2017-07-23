@@ -6,17 +6,18 @@ import com.google.firebase.auth.FirebaseCredentials
 import com.google.firebase.database._
 import com.google.firebase.tasks.{OnCompleteListener, Task}
 import com.google.firebase.{FirebaseApp, FirebaseOptions}
+import vrchcfg.FirebaseCfg
 
 import scala.concurrent.{Future, Promise}
 
-class FirebaseMessageClient(config: FirebaseConfig, room: String) extends vrch.Logger {
+class FirebaseMessageClient(config: FirebaseCfg, room: String) extends vrch.Logger {
   import config._
 
-  private[this] val serviceAccount = new FileInputStream(json)
+  private[this] val serviceAccount = new FileInputStream(adminsdkJsonPath)
 
   private[this] val options = new FirebaseOptions.Builder()
     .setCredential(FirebaseCredentials.fromCertificate(serviceAccount))
-    .setDatabaseUrl(url)
+    .setDatabaseUrl(adminsdkUrl)
     .build()
 
   FirebaseApp.initializeApp(options)

@@ -4,10 +4,11 @@ import java.net.URL
 
 import play.api.libs.json._
 import vrch.Logger
+import vrchcfg.SlackCfg
 
 import scalaj.http.{Http, HttpResponse, MultiPart}
 
-case class SlackApi(config: SlackConfig) extends Logger {
+case class SlackApi(config: SlackCfg) extends Logger {
   import config._
 
   private[this] def as[A](path: String, res: HttpResponse[String])(implicit reads: Reads[A]): A = {

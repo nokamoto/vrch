@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package vrchcfg;
+
+message GrpcCfg {
+  string host = 1;
+
+  int32 port = 2;
+
+  string api_key = 3;
+}
+
+message SlackCfg {
+  string url = 1;
+
+  string token = 2;
+
+  string channel = 3;
+}
+
+message FirebaseCfg {
+  string adminsdk_json_path = 1;
+
+  string adminsdk_url = 2;
+
+  string storage_bucket = 3;
+}
+
+message SlackbridgeCfg {
+  GrpcCfg grpc = 1;
+
+  SlackCfg slack = 2;
+
+  FirebaseCfg firebase = 3;
+}
