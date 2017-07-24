@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package vrchcfg;
+
+import "google/protobuf/duration.proto";
+
+message ChCfg {
+  string url = 1;
+
+  string api_key = 2;
+}
+
+message VrCfg {
+  google.protobuf.Duration shutdown_timeout = 1;
+
+  google.protobuf.Duration request_timeout = 2;
+}
+
+message VrchCfg {
+  int32 port = 1;
+
+  int32 concurrency = 2;
+
+  google.protobuf.Duration shutdown_timeout = 3;
+
+  ChCfg ch = 4;
+
+  VrCfg vr = 5;
+}

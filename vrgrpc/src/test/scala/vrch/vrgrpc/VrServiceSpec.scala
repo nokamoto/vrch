@@ -10,8 +10,9 @@ import io.grpc.{ManagedChannel, ServerServiceDefinition}
 import org.scalatest.{Assertion, FlatSpec, Suite}
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
 import vrch.util.AvailablePort
-import vrch.vrgrpc.VrServiceSpec.{expect, observer, withServer, clusterInfo}
+import vrch.vrgrpc.VrServiceSpec.{clusterInfo, expect, observer, withServer}
 import vrch._
+import vrchcfg.VrCfg
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -124,7 +125,7 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
     val p = availablePort()
 
     val grpc = new ServerMain
-      with MixinVrClusterService with MixinVrService with MixinExecutionContext with MixinVrCluster with MixinVrConfig {
+      with MixinVrClusterService with MixinVrService with MixinExecutionContext with MixinVrCluster {
 
       override protected[this] def services: Seq[(ExecutionContext) => ServerServiceDefinition] = {
         Seq(VrServiceGrpc.bindService(vrService, _), VrClusterServiceGrpc.bindService(vrClusterService, _))
@@ -136,6 +137,8 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
         super.shutdown()
         vrCluster.shutdown()
       }
+
+      override def vrConfig: VrCfg = VrCfg().update(_.shutdownTimeout.seconds := 10, _.requestTimeout.seconds := 10)
     }
 
     val channel = NettyChannelBuilder.forAddress("localhost", p).usePlaintext(true).build()
