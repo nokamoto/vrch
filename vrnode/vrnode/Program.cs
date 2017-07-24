@@ -53,7 +53,7 @@ namespace vrnode
                 while (true)
                 {
                     
-                    Thread.Sleep(30 * 1000);
+                    Thread.Sleep(10 * 1000);
 
                     if (keepalive != Interlocked.Read(ref ack))
                     {
