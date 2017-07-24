@@ -1,6 +1,6 @@
 FROM openjdk:8u131-jdk
 
-COPY slackbridge/target/scala-2.11/slackbridge-assembly-0.1-SNAPSHOT.jar /slackbridge.jar
+COPY slackbridge.jar /slackbridge.jar
 
 ENV CONFIG_FILE "/docker/application.conf"
 
