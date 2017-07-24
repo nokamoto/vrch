@@ -1,6 +1,6 @@
 FROM openjdk:8u131-jdk
 
-COPY vrchgrpc/target/scala-2.11/vrchgrpc-assembly-0.1-SNAPSHOT.jar /vrchgrpc.jar
+COPY vrchgrpc.jar /vrchgrpc.jar
 
 ENV GRPC_PORT 9000
 

@@ -60,6 +60,7 @@ lazy val chgrpc = (project in file("chgrpc")).
 
 lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
   commons,
+  assemblyOutputPath in assembly := file("docker/vrchgrpc.jar"),
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard
@@ -72,6 +73,7 @@ lazy val vrchgrpc = (project in file("vrchgrpc")).settings(
 
 lazy val slackbridge = (project in file("slackbridge")).settings(
   commons, json, http, websocket, firebase, storage,
+  assemblyOutputPath in assembly := file("docker/slackbridge.jar"),
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _ *) if ps.last == "io.netty.versions.properties" =>
       MergeStrategy.discard

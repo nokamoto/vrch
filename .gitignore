@@ -10,3 +10,4 @@ vrnode/vrnode/obj/
 vrnode/vrnode/vrnode.csproj.user
 docker/*.json
 docker/*.conf
+docker/*.jar
