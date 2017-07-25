@@ -5,16 +5,17 @@ import java.util.concurrent.atomic.AtomicReference
 
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.{ManagedChannel, ServerServiceDefinition}
-import org.http4s.{Method, Request}
 import org.http4s.server.blaze.BlazeBuilder
+import org.http4s.{Method, Request}
 import org.scalatest.FlatSpec
-import play.api.libs.json.{JsSuccess, Json}
+import play.api.libs.json.Json
 import vrch.chgrpc.ChServiceSpec.{Props, withServer}
 import vrch.docomo.{DocomoDialogueRequest, DocomoDialogueResponse}
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
 import vrch.mockdocomo.DocomoService
 import vrch.util.AvailablePort
 import vrch.{ChServiceGrpc, Dialogue}
+import vrchcfg.ChCfg
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -81,7 +82,7 @@ object ChServiceSpec extends AvailablePort {
         Seq(ChServiceGrpc.bindService(chService, _))
       }
 
-      override def chConfig: ChConfig = ChConfig(apiKey = props.apiKey, url = s"http://localhost:$p1")
+      override def chConfig: ChCfg = ChCfg().update(_.apiKey := props.apiKey, _.url := s"http://localhost:$p1")
 
       override def serverConfig: ServerConfig = ServerConfig(port = p2, concurrency = 1, shutdownTimeout = 10.seconds)
     }

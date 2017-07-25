@@ -7,6 +7,6 @@ ENV GRPC_PORT 9000
 ENV API_KEY default
 
 CMD java\
-    -Dgrpc.port=${GRPC_PORT}\
-    -Dapikey=${API_KEY}\
+    -Dport=${GRPC_PORT}\
+    -Dch.api_key=${API_KEY}\
     -jar /vrchgrpc.jar

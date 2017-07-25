@@ -2,9 +2,10 @@ package vrch.vrchgrpc
 
 import vrch.VrchServiceGrpc.VrchService
 import vrch._
-import vrch.chgrpc.{ChConfig, ChServiceImpl, UseChConfig, UseChService}
+import vrch.chgrpc.{ChServiceImpl, UseChConfig, UseChService}
 import vrch.grpc.UseExecutionContext
 import vrch.vrgrpc.{UseVrCluster, UseVrService, VrCluster, VrServiceImpl}
+import vrchcfg.{ChCfg, VrchCfg}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +30,7 @@ trait MixinVrchService extends UseVrchService
   with UseVrchConfig with UseExecutionContext with UseVrCluster with UseChConfig { self =>
 
   override val vrchService: VrchService = new VrchServiceImpl with UseVrService with UseChService {
-    override def vrchConfig: VrchConfig = self.vrchConfig
+    override def vrchConfig: VrchCfg = self.vrchConfig
 
     override implicit def context: ExecutionContext = self.context
 
@@ -38,7 +39,7 @@ trait MixinVrchService extends UseVrchService
     }
 
     override def chService: ChServiceGrpc.ChService = new ChServiceImpl {
-      override def chConfig: ChConfig = self.chConfig
+      override def chConfig: ChCfg = self.chConfig
     }
   }
 }

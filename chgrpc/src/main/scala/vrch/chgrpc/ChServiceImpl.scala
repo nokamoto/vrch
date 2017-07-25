@@ -6,6 +6,7 @@ import play.api.libs.json._
 import vrch.ChServiceGrpc.ChService
 import vrch.{Dialogue, Logger}
 import vrch.docomo.{DocomoDialogueRequest, DocomoDialogueResponse}
+import vrchcfg.ChCfg
 
 import scala.concurrent.Future
 import scalaj.http.Http
@@ -41,6 +42,6 @@ trait UseChService {
 
 trait MixinChService extends UseChService with UseChConfig { self =>
   override def chService: ChService = new ChServiceImpl {
-    override def chConfig: ChConfig = self.chConfig
+    override def chConfig: ChCfg = self.chConfig
   }
 }

@@ -3,9 +3,11 @@ package vrch.vrgrpc
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import io.grpc.stub.StreamObserver
+import vrch.ImplicitDuration._
+import vrch._
 import vrch.vrgrpc.VrActor.IncomingObserver
 import vrch.vrgrpc.VrClusterActor.{Info, Join}
-import vrch._
+import vrchcfg.VrCfg
 
 import scala.concurrent.{Await, Future}
 
@@ -23,13 +25,13 @@ trait VrCluster extends UseVrConfig with Logger {
     new IncomingObserver(self = ref)
   }
 
-  def info: Future[ClusterInfo] = cluster.ask(Info)(vrConfig.requestTimeout).mapTo[ClusterInfo]
+  def info: Future[ClusterInfo] = cluster.ask(Info)(vrConfig.getRequestTimeout.duration).mapTo[ClusterInfo]
 
-  def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.requestTimeout).mapTo[Voice]
+  def talk(text: Text): Future[Voice] = cluster.ask(text)(vrConfig.getRequestTimeout.duration).mapTo[Voice]
 
   def shutdown(): Unit = {
     logger.info(s"shutdown: $system")
-    Await.result(system.terminate(), vrConfig.shutdownTimeout)
+    Await.result(system.terminate(), vrConfig.getShutdownTimeout.duration)
   }
 }
 
@@ -39,6 +41,6 @@ trait UseVrCluster {
 
 trait MixinVrCluster extends UseVrCluster with UseVrConfig { self =>
   override val vrCluster: VrCluster = new VrCluster {
-    override def vrConfig: VrConfig = self.vrConfig
+    override def vrConfig: VrCfg = self.vrConfig
   }
 }
