@@ -1,5 +1,6 @@
 package vrch.vrchgrpc
 
+import akka.actor.ActorSystem
 import io.grpc.ServerServiceDefinition
 import vrch.grpc.{MixinExecutionContext, ServerMain}
 import vrch.vrgrpc.{MixinVrCluster, MixinVrClusterService, UseVrClusterService}
@@ -21,4 +22,6 @@ object VrchGrpcMain extends VrchGrpc
     logger.info(s"props: $vrchConfig")
     super.main(args)
   }
+
+  override def actorSystem: ActorSystem = ActorSystem("vrchgrpc")
 }

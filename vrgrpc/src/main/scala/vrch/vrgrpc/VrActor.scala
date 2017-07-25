@@ -30,8 +30,6 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor with ActorLogging {
     }
   }
 
-  override def preStart(): Unit = super.preStart()
-
   override def postStop(): Unit = {
     super.postStop()
 
@@ -51,7 +49,7 @@ class VrActor(out: StreamObserver[Outgoing]) extends Actor with ActorLogging {
       val now = System.currentTimeMillis()
 
       if (ts + KEEP_ALIVE_TIMEOUT.toMillis < now) {
-        log.error("{} keep-alive failed: {} + 60 seconds < {}", self, ts, now)
+        log.error("{} keep-alive failed: {} + {} < {}", self, ts, KEEP_ALIVE_TIMEOUT, now)
         context.stop(self)
       }
 
