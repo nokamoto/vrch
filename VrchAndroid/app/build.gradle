@@ -7,7 +7,7 @@ properties.load(new FileInputStream("build.properties"))
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "26.0.0"
+    buildToolsVersion "26.0.1"
     defaultConfig {
         applicationId "nokamoto.github.com.vrchandroid"
         minSdkVersion 21
