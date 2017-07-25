@@ -1,34 +1,36 @@
 package vrch.vrgrpc
 
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import akka.actor.ActorSystem
 import com.google.protobuf.ByteString
 import com.google.protobuf.empty.Empty
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
-import io.grpc.{ManagedChannel, ServerServiceDefinition}
+import io.grpc.{ManagedChannel, ServerServiceDefinition, StatusRuntimeException}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Assertion, FlatSpec, Suite}
 import vrch._
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
 import vrch.util.AvailablePort
-import vrch.vrgrpc.VrServiceSpec.{clusterInfo, expect, observer, withServer}
+import vrch.vrgrpc.VrServiceSpec.{clusterInfo, default, expect, observeCompleted, observeNext, withServer}
 import vrchcfg.VrCfg
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class VrServiceSpec extends FlatSpec {
+class VrServiceSpec extends FlatSpec with ScalaFutures {
   it should "join nodes and keep-alive" in {
-    withServer { channel =>
+    withServer(default) { channel =>
       val clusterStub = VrClusterServiceGrpc.stub(channel)
 
       val expected1 = new AtomicReference[Outgoing]()
       val expected2 = new AtomicReference[Outgoing]()
 
-      val in1 = clusterStub.join(observer(expected1.set))
-      val in2 = clusterStub.join(observer(expected2.set))
+      val in1 = clusterStub.join(observeNext(expected1.set))
+      val in2 = clusterStub.join(observeNext(expected2.set))
 
       expect(10.seconds)(assert(clusterInfo(channel).node.size === 2))
 
@@ -49,10 +51,52 @@ class VrServiceSpec extends FlatSpec {
     }
   }
 
-  it should "cancel on error" in {
-    withServer { channel =>
+  it should "kick an idle node after keep alive timeout" in {
+    val cfg = default.update(_.keepaliveInterval.seconds := 1, _.keepaliveTimeout.seconds := 3)
+
+    withServer(cfg) { channel =>
       val clusterStub = VrClusterServiceGrpc.stub(channel)
-      val in = clusterStub.join(observer(_ => ()))
+
+      val expected = new AtomicBoolean(false)
+
+      clusterStub.join(observeCompleted(expected.set(true)))
+
+      assert(expected.get() === false)
+
+      Thread.sleep((cfg.getKeepaliveTimeout.seconds + 1) * 1000)
+
+      assert(expected.get())
+      assert(clusterInfo(channel).node.isEmpty)
+    }
+  }
+
+  it should "kick a node does not response to the request" in {
+    val cfg = default.update(_.keepaliveInterval.seconds := 1, _.requestTimeout.seconds := 1)
+
+    withServer(cfg) { channel =>
+      val clusterStub = VrClusterServiceGrpc.stub(channel)
+
+      val expected = new AtomicBoolean(false)
+
+      clusterStub.join(observeCompleted(expected.set(true)))
+
+      assert(expected.get() === false)
+
+      val stub = VrServiceGrpc.stub(channel)
+      val future = stub.talk(Text().update(_.text := "echo"))
+
+      Thread.sleep((cfg.getRequestTimeout.seconds + 1) * 1000)
+
+      assert(future.map(_ => false).recover { case _: StatusRuntimeException => true }.futureValue)
+      assert(expected.get())
+      assert(clusterInfo(channel).node.isEmpty)
+    }
+  }
+
+  it should "cancel on error" in {
+    withServer(default) { channel =>
+      val clusterStub = VrClusterServiceGrpc.stub(channel)
+      val in = clusterStub.join(observeNext(_ => ()))
 
       expect(10.seconds)(assert(clusterInfo(channel).node.size === 1))
 
@@ -63,14 +107,14 @@ class VrServiceSpec extends FlatSpec {
   }
 
   it should "talk to a node" in {
-    withServer { channel =>
+    withServer(default) { channel =>
       val clusterStub = VrClusterServiceGrpc.stub(channel)
       val stub = VrServiceGrpc.blockingStub(channel)
 
       val in = new AtomicReference[StreamObserver[Incoming]]()
 
       in.set(clusterStub.join(
-        observer(out => in.get().onNext(Incoming().update(_.voice.voice := ByteString.copyFromUtf8(out.getText.text))))
+        observeNext(out => in.get().onNext(Incoming().update(_.voice.voice := ByteString.copyFromUtf8(out.getText.text))))
       ))
 
       def echo(ss: String*) = {
@@ -88,6 +132,15 @@ class VrServiceSpec extends FlatSpec {
 }
 
 object VrServiceSpec extends AvailablePort with Suite with Logger {
+  val default: VrCfg = {
+    VrCfg().update(
+      _.shutdownTimeout.seconds := 10,
+      _.requestTimeout.seconds := 10,
+      _.keepaliveInterval.seconds := 10,
+      _.keepaliveTimeout.seconds := 30
+    )
+  }
+
   def clusterInfo(channel: ManagedChannel): ClusterInfo = VrClusterServiceGrpc.blockingStub(channel).info(Empty())
 
   def expect(timeout: FiniteDuration)(f: => Assertion): Unit = {
@@ -113,9 +166,9 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
     fs.foreach(throw _)
   }
 
-  def observer(f: Outgoing => Unit): StreamObserver[Outgoing] = {
+  def observeNext(f: Outgoing => Unit): StreamObserver[Outgoing] = {
     new StreamObserver[Outgoing] {
-      override def onError(t: Throwable): Unit = logger.error("outgoing stream observer error.", t)
+      override def onError(t: Throwable): Unit = ()
 
       override def onCompleted(): Unit = ()
 
@@ -123,7 +176,17 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
     }
   }
 
-  def withServer(f: ManagedChannel => Unit): Unit = {
+  def observeCompleted(f: => Unit): StreamObserver[Outgoing] = {
+    new StreamObserver[Outgoing] {
+      override def onError(t: Throwable): Unit = ()
+
+      override def onCompleted(): Unit = f
+
+      override def onNext(value: Outgoing): Unit = ()
+    }
+  }
+
+  def withServer(cfg: VrCfg)(f: ManagedChannel => Unit): Unit = {
     val p = availablePort()
 
     val grpc = new ServerMain
@@ -140,7 +203,7 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
         vrCluster.shutdown()
       }
 
-      override def vrConfig: VrCfg = VrCfg().update(_.shutdownTimeout.seconds := 10, _.requestTimeout.seconds := 10)
+      override def vrConfig: VrCfg = cfg
 
       override def actorSystem: ActorSystem = ActorSystem(UUID.randomUUID().toString)
     }

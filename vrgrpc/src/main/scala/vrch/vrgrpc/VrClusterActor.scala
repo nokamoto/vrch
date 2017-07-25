@@ -2,14 +2,15 @@ package vrch.vrgrpc
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props, Terminated}
 import vrch.ClusterInfo.Node
+import vrch.ImplicitDuration._
 import vrch.vrgrpc.VrActor.VoiceResult
 import vrch.vrgrpc.VrClusterActor.{CleanUp, Info, Join, NotReady}
 import vrch.{ClusterInfo, Text}
+import vrchcfg.VrCfg
 
-import scala.concurrent.duration._
 import scala.collection.immutable.Queue
 
-class VrClusterActor extends Actor with ActorLogging {
+class VrClusterActor(cfg: VrCfg) extends Actor with ActorLogging {
   import context._
 
   private[this] case class Waiting(sender: ActorRef, ts: Long = System.currentTimeMillis())
@@ -18,9 +19,9 @@ class VrClusterActor extends Actor with ActorLogging {
 
   private[this] var waiting = Map.empty[ActorRef, Waiting]
 
-  private[this] val INTERVAL = 10.seconds
+  private[this] val INTERVAL = cfg.getKeepaliveInterval.duration
 
-  private[this] val REQUEST_TIMEOUT = 10.seconds
+  private[this] val REQUEST_TIMEOUT = cfg.getRequestTimeout.duration
 
   private[this] val cleaner = context.system.scheduler.schedule(INTERVAL, INTERVAL, self, CleanUp)
 
@@ -110,5 +111,5 @@ object VrClusterActor {
 
   private case object CleanUp
 
-  def props: Props = Props(new VrClusterActor)
+  def props(cfg: VrCfg): Props = Props(new VrClusterActor(cfg))
 }
