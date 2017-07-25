@@ -2,19 +2,20 @@ package vrch.vrgrpc
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import io.grpc.stub.StreamObserver
-import vrch.vrgrpc.VrActor.{KeepAlive, VoiceResult}
+import vrch.ImplicitDuration._
 import vrch._
+import vrch.vrgrpc.VrActor.{KeepAlive, VoiceResult, VrSetting}
+import vrchcfg.VrCfg
 
-import scala.concurrent.duration._
-
-class VrActor(out: StreamObserver[Outgoing]) extends Actor with ActorLogging {
+class VrActor(setting: VrSetting) extends Actor with ActorLogging {
   import context._
+  import setting._
 
   private[this] var last: Option[ActorRef] = None
 
-  private[this] val INTERVAL = 10.seconds
+  private[this] val INTERVAL = cfg.getKeepaliveInterval.duration
 
-  private[this] val KEEP_ALIVE_TIMEOUT = 30.seconds
+  private[this] val KEEP_ALIVE_TIMEOUT = cfg.getKeepaliveTimeout.duration
 
   private[this] val keepAlive = context.system.scheduler.schedule(INTERVAL, INTERVAL, self, KeepAlive)
 
@@ -90,7 +91,9 @@ object VrActor extends Logger {
 
   case class VoiceResult(voice: Voice, vr: ActorRef)
 
-  def props(out: StreamObserver[Outgoing]): Props = Props(new VrActor(out))
+  case class VrSetting(out: StreamObserver[Outgoing], cfg: VrCfg)
+
+  def props(setting: VrSetting): Props = Props(new VrActor(setting))
 
   class IncomingObserver(self: ActorRef) extends StreamObserver[Incoming] {
     override def onError(t: Throwable): Unit = {

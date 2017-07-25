@@ -30,7 +30,12 @@ trait MixinVrchConfig extends UseVrchConfig with UseChConfig with UseVrConfig {
     val fallback = VrchCfg().update(
       _.concurrency := Runtime.getRuntime.availableProcessors(),
       _.shutdownTimeout.seconds := 10,
-      _.vr := VrCfg().update(_.shutdownTimeout.seconds := 10, _.requestTimeout.seconds := 10),
+      _.vr := VrCfg().update(
+        _.shutdownTimeout.seconds := 10,
+        _.requestTimeout.seconds := 10,
+        _.keepaliveInterval.seconds := 10,
+        _.keepaliveTimeout.seconds := 30
+      ),
       _.ch := ChCfg().update(_.url := "https://api.apigw.smt.docomo.ne.jp")
     )
 
