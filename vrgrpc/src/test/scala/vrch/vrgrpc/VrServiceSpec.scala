@@ -9,7 +9,6 @@ import com.google.protobuf.empty.Empty
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import io.grpc.{ManagedChannel, ServerServiceDefinition, StatusRuntimeException}
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Assertion, FlatSpec, Suite}
 import vrch._
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
@@ -18,10 +17,9 @@ import vrch.vrgrpc.VrServiceSpec.{clusterInfo, default, expect, observeCompleted
 import vrchcfg.VrCfg
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class VrServiceSpec extends FlatSpec with ScalaFutures {
+class VrServiceSpec extends FlatSpec {
   it should "join nodes and keep-alive" in {
     withServer(default) { channel =>
       val clusterStub = VrClusterServiceGrpc.stub(channel)
@@ -63,9 +61,7 @@ class VrServiceSpec extends FlatSpec with ScalaFutures {
 
       assert(expected.get() === false)
 
-      Thread.sleep((cfg.getKeepaliveTimeout.seconds + 1) * 1000)
-
-      assert(expected.get())
+      expect(cfg.getKeepaliveTimeout.seconds.seconds + 3.seconds)(assert(expected.get()))
       assert(clusterInfo(channel).node.isEmpty)
     }
   }
@@ -82,14 +78,11 @@ class VrServiceSpec extends FlatSpec with ScalaFutures {
 
       assert(expected.get() === false)
 
-      val stub = VrServiceGrpc.stub(channel)
-      val future = stub.talk(Text().update(_.text := "echo"))
+      val stub = VrServiceGrpc.blockingStub(channel)
+      intercept[StatusRuntimeException](stub.talk(Text().update(_.text := "echo")))
 
-      Thread.sleep((cfg.getRequestTimeout.seconds + 1) * 1000)
-
-      assert(future.map(_ => false).recover { case _: StatusRuntimeException => true }.futureValue)
-      assert(expected.get())
-      assert(clusterInfo(channel).node.isEmpty)
+      expect(3.seconds)(assert(clusterInfo(channel).node.isEmpty))
+      expect(3.seconds)(assert(expected.get()))
     }
   }
 
