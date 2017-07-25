@@ -11,8 +11,8 @@ import vrchcfg.VrCfg
 
 import scala.concurrent.{Await, Future}
 
-trait VrCluster extends UseVrConfig with Logger {
-  private[this] val system = ActorSystem("vr-cluster")
+trait VrCluster extends UseVrConfig with UseActorSystem with Logger {
+  private[this] val system = actorSystem
 
   private[this] val cluster = system.actorOf(VrClusterActor.props)
 
@@ -39,8 +39,10 @@ trait UseVrCluster {
   def vrCluster: VrCluster
 }
 
-trait MixinVrCluster extends UseVrCluster with UseVrConfig { self =>
+trait MixinVrCluster extends UseVrCluster with UseVrConfig with UseActorSystem { self =>
   override val vrCluster: VrCluster = new VrCluster {
     override def vrConfig: VrCfg = self.vrConfig
+
+    override def actorSystem: ActorSystem = self.actorSystem
   }
 }

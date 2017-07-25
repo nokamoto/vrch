@@ -1,17 +1,19 @@
 package vrch.vrgrpc
 
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
+import akka.actor.ActorSystem
 import com.google.protobuf.ByteString
 import com.google.protobuf.empty.Empty
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import io.grpc.{ManagedChannel, ServerServiceDefinition}
 import org.scalatest.{Assertion, FlatSpec, Suite}
+import vrch._
 import vrch.grpc.{MixinExecutionContext, ServerConfig, ServerMain}
 import vrch.util.AvailablePort
 import vrch.vrgrpc.VrServiceSpec.{clusterInfo, expect, observer, withServer}
-import vrch._
 import vrchcfg.VrCfg
 
 import scala.concurrent.ExecutionContext
@@ -139,6 +141,8 @@ object VrServiceSpec extends AvailablePort with Suite with Logger {
       }
 
       override def vrConfig: VrCfg = VrCfg().update(_.shutdownTimeout.seconds := 10, _.requestTimeout.seconds := 10)
+
+      override def actorSystem: ActorSystem = ActorSystem(UUID.randomUUID().toString)
     }
 
     val channel = NettyChannelBuilder.forAddress("localhost", p).usePlaintext(true).build()
